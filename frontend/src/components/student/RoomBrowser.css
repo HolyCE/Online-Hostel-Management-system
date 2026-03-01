@@ -1,0 +1,43 @@
+.room-browser-container {
+  padding-bottom: 4rem;
+}
+
+.room-card {
+  overflow: hidden;
+}
+
+.room-card img {
+  transition: transform 0.5s ease;
+}
+
+.room-card:hover img {
+  transform: scale(1.05);
+}
+
+.slide-in {
+  animation: slideIn 0.3s ease-out forwards;
+}
+
+.fade-in {
+  animation: fadeIn 0.5s ease-in forwards;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
