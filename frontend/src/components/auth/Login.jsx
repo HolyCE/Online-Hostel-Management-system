@@ -60,26 +60,35 @@ const Login = () => {
 
   return (
     <Container maxWidth="sm">
-      <Box sx={{ mt: 8, mb: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <Box sx={{ mt: 10, mb: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
           style={{ width: '100%' }}
         >
-          <Paper elevation={0} sx={{ p: { xs: 3, md: 5 }, width: '100%', borderRadius: 4, boxShadow: '0 12px 40px rgba(0,0,0,0.08)' }}>
-            <Box sx={{ textAlign: 'center', mb: 4 }}>
-              <Typography variant="h3" gutterBottom sx={{ color: '#0a2351', fontWeight: 800 }}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: { xs: 4, md: 6 },
+              width: '100%',
+              borderRadius: 3,
+              bgcolor: '#0a0a0a',
+              border: '1px solid rgba(255,255,255,0.05)',
+            }}
+          >
+            <Box sx={{ textAlign: 'center', mb: 5 }}>
+              <Typography variant="h3" gutterBottom sx={{ color: '#ffffff', fontWeight: 800, letterSpacing: '-0.02em' }}>
                 Welcome Back
               </Typography>
-              <Typography variant="body1" color="text.secondary">
+              <Typography variant="body1" sx={{ color: '#a1a1aa' }}>
                 Sign in to manage your hostel experience
               </Typography>
             </Box>
 
             {apiError && (
               <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
-                <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }} onClose={() => setApiError('')}>
+                <Alert severity="error" sx={{ mb: 4, borderRadius: 2 }} onClose={() => setApiError('')}>
                   {apiError}
                 </Alert>
               </motion.div>
@@ -94,12 +103,9 @@ const Login = () => {
                 helperText={errors.email?.message}
                 margin="normal"
                 InputProps={{
-                  startAdornment: <InputAdornment position="start"><Email sx={{ color: 'text.secondary' }} /></InputAdornment>,
+                  startAdornment: <InputAdornment position="start"><Email sx={{ color: 'rgba(255,255,255,0.4)' }} /></InputAdornment>,
                 }}
-                sx={{
-                  mb: 2,
-                  '& .MuiOutlinedInput-root': { borderRadius: 2 }
-                }}
+                sx={{ mb: 3 }}
               />
 
               <TextField
@@ -111,23 +117,20 @@ const Login = () => {
                 helperText={errors.password?.message}
                 margin="normal"
                 InputProps={{
-                  startAdornment: <InputAdornment position="start"><Lock sx={{ color: 'text.secondary' }} /></InputAdornment>,
+                  startAdornment: <InputAdornment position="start"><Lock sx={{ color: 'rgba(255,255,255,0.4)' }} /></InputAdornment>,
                   endAdornment: (
                     <InputAdornment position="end">
-                      <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
+                      <IconButton onClick={() => setShowPassword(!showPassword)} edge="end" sx={{ color: 'rgba(255,255,255,0.4)' }}>
                         {showPassword ? <VisibilityOff /> : <Visibility />}
                       </IconButton>
                     </InputAdornment>
                   ),
                 }}
-                sx={{
-                  mb: 1,
-                  '& .MuiOutlinedInput-root': { borderRadius: 2 }
-                }}
+                sx={{ mb: 1 }}
               />
 
               <Box sx={{ mt: 1, textAlign: 'right' }}>
-                <Link to="/forgot-password" style={{ color: '#0a2351', textDecoration: 'none', fontSize: '0.85rem', fontWeight: 600 }}>
+                <Link to="/forgot-password" style={{ color: '#ffffff', textDecoration: 'none', fontSize: '0.85rem', fontWeight: 500, opacity: 0.8 }}>
                   Forgot Password?
                 </Link>
               </Box>
@@ -139,29 +142,30 @@ const Login = () => {
                 disabled={isSubmitting}
                 size="large"
                 sx={{
-                  mt: 4, mb: 3, py: 1.5,
-                  backgroundColor: '#0a2351',
+                  mt: 5, mb: 3, py: 1.8,
+                  backgroundColor: '#ffffff',
+                  color: '#000000',
                   borderRadius: 2,
-                  fontWeight: 'bold',
-                  fontSize: '1.1rem',
+                  fontWeight: 600,
+                  fontSize: '1rem',
                   textTransform: 'none',
-                  boxShadow: '0 4px 14px rgba(10, 35, 81, 0.4)',
-                  '&:hover': { backgroundColor: '#1a3a6e', transform: 'translateY(-2px)' },
+                  border: '1px solid transparent',
+                  '&:hover': { backgroundColor: '#f4f4f5', transform: 'translateY(-1px)' },
                   transition: 'all 0.2s'
                 }}
               >
                 {isSubmitting ? <CircularProgress size={26} color="inherit" /> : 'Log In'}
-                {!isSubmitting && <LoginIcon sx={{ ml: 1 }} />}
+                {!isSubmitting && <LoginIcon sx={{ ml: 1, fontSize: '1.2rem' }} />}
               </Button>
 
-              <Divider sx={{ my: 3 }}>
-                <Typography variant="body2" color="text.secondary">OR</Typography>
+              <Divider sx={{ my: 4, borderColor: 'rgba(255,255,255,0.1)' }}>
+                <Typography variant="body2" sx={{ color: '#a1a1aa' }}>OR</Typography>
               </Divider>
 
               <Box sx={{ textAlign: 'center' }}>
-                <Typography variant="body1" color="text.secondary">
+                <Typography variant="body1" sx={{ color: '#a1a1aa' }}>
                   New to the hostel?{' '}
-                  <Link to="/register" style={{ color: '#0a2351', textDecoration: 'none', fontWeight: 'bold' }}>
+                  <Link to="/register" style={{ color: '#ffffff', textDecoration: 'none', fontWeight: 600 }}>
                     Create an account
                   </Link>
                 </Typography>

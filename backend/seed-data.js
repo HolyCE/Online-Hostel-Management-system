@@ -24,7 +24,7 @@ const roomImages = [
 ];
 
 const amenities = [
-  'bed', 'mattress', 'wardrobe', 'desk', 'chair', 
+  'bed', 'mattress', 'wardrobe', 'desk', 'chair',
   'fan', 'ac', 'wifi', 'attached_bathroom', 'tv',
   'mini_fridge', 'study_table', 'bookshelf', 'mirror'
 ];
@@ -74,6 +74,20 @@ async function seedDatabase() {
       console.log('👤 Created admin user');
     }
 
+    let staffUser = await User.findOne({ email: 'staff@example.com' });
+    if (!staffUser) {
+      staffUser = await User.create({
+        name: 'Staff Member',
+        email: 'staff@example.com',
+        matricNumber: 'STAFF2024001',
+        password: 'staff123',
+        phoneNumber: '+1234567892',
+        gender: 'male',
+        role: 'staff'
+      });
+      console.log('👤 Created staff user');
+    }
+
     // Create 30 sample rooms
     console.log('🏠 Creating 30 sample rooms...');
     const rooms = [];
@@ -90,7 +104,7 @@ async function seedDatabase() {
       const roomType = roomTypes[Math.floor(Math.random() * roomTypes.length)];
       const status = Math.random() > 0.3 ? 'available' : 'occupied'; // 70% available
       const genderRestriction = ['male', 'female', 'any'][Math.floor(Math.random() * 3)];
-      
+
       // Random amenities (3-7 items)
       const roomAmenities = [];
       const numAmenities = Math.floor(Math.random() * 5) + 3;
@@ -117,7 +131,7 @@ async function seedDatabase() {
       });
 
       rooms.push(room);
-      
+
       // Allocate test user to one room
       if (i === 5 && status === 'occupied') {
         testUser.room = room._id;
@@ -130,7 +144,7 @@ async function seedDatabase() {
     console.log('💰 Creating sample payments...');
     const paymentStatuses = ['success', 'pending', 'failed'];
     const sessions = ['2023/2024', '2024/2025'];
-    
+
     for (let i = 0; i < 20; i++) {
       const room = rooms[Math.floor(Math.random() * rooms.length)];
       const status = paymentStatuses[Math.floor(Math.random() * paymentStatuses.length)];
@@ -217,7 +231,7 @@ async function seedDatabase() {
     console.log(`- Rooms: ${rooms.length}`);
     console.log(`- Payments: 20`);
     console.log(`- Tickets: 25`);
-    
+
     console.log('\n🔑 Test Credentials:');
     console.log('Student - Email: test@example.com | Password: password123');
     console.log('Admin   - Email: admin@example.com | Password: admin123');

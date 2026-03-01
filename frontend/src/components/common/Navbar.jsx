@@ -1,193 +1,293 @@
 import React, { useState } from 'react';
-import {
-  AppBar,
-  Box,
-  Toolbar,
-  IconButton,
-  Typography,
-  Menu,
-  MenuItem,
-  Button,
-  Avatar,
-  Drawer,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  Divider
-} from '@mui/material';
-import {
-  Menu as MenuIcon,
-  Dashboard,
-  MeetingRoom,
-  Payment,
-  Report,
-  Person,
-  Logout,
-  Home,
-  Info,
-  ContactMail
-} from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
+import { Box, Typography, Button, Avatar, IconButton } from '@mui/material';
+import { Menu as MenuIcon, X } from 'lucide-react';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+
+const DropdownItem = ({ title, description, icon, onClick }) => (
+  <Box
+    onClick={onClick}
+    sx={{
+      display: 'flex',
+      alignItems: 'flex-start',
+      p: 1.5,
+      borderRadius: '8px',
+      cursor: 'pointer',
+      transition: 'background 0.2s ease',
+      '&:hover': {
+        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+      },
+    }}
+  >
+    <Box sx={{ mr: 2, mt: 0.5, color: '#a1a1aa' }}>{icon}</Box>
+    <Box>
+      <Typography variant="body2" sx={{ fontWeight: 500, color: '#fff', mb: 0.5 }}>
+        {title}
+      </Typography>
+      <Typography variant="caption" sx={{ color: '#a1a1aa', display: 'block', lineHeight: 1.3 }}>
+        {description}
+      </Typography>
+    </Box>
+  </Box>
+);
 
 const Navbar = ({ user, onLogout }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [anchorEl, setAnchorEl] = useState(null);
+  const [activeDropdown, setActiveDropdown] = useState(null);
 
-  const handleDrawerToggle = () => {
-    setMobileOpen(!mobileOpen);
+  const isHome = location.pathname === '/';
+
+  const handleMouseEnter = (menu) => setActiveDropdown(menu);
+  const handleMouseLeave = () => setActiveDropdown(null);
+
+  const renderDropdownContent = () => {
+    switch (activeDropdown) {
+      case 'features':
+        return (
+          <Box sx={{ p: 2, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
+            <DropdownItem title="Room Allocation" description="AI-powered matching for students" onClick={() => navigate('/features/allocation')} />
+            <DropdownItem title="Maintenance" description="Streamlined ticket management" onClick={() => navigate('/features/maintenance')} />
+            <DropdownItem title="Payments" description="Secure, instant transaction handling" onClick={() => navigate('/features/payments')} />
+            <DropdownItem title="Analytics" description="Deep insights for admins" onClick={() => navigate('/features/analytics')} />
+          </Box>
+        );
+      case 'company':
+        return (
+          <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
+            <DropdownItem title="About Us" description="Our mission to modernize living" onClick={() => navigate('/about')} />
+            <DropdownItem title="Careers" description="Join our growing team" onClick={() => navigate('/careers')} />
+            <DropdownItem title="Contact" description="Get in touch with sales or support" onClick={() => navigate('/contact')} />
+          </Box>
+        );
+      case 'resources':
+        return (
+          <Box sx={{ p: 2, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
+            <DropdownItem title="Documentation" description="Guides and API references" onClick={() => navigate('/docs')} />
+            <DropdownItem title="Help Center" description="FAQs and support articles" onClick={() => navigate('/help')} />
+            <DropdownItem title="Blog" description="Latest news and updates" onClick={() => navigate('/blog')} />
+          </Box>
+        );
+      default:
+        return null;
+    }
   };
-
-  const handleMenu = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
-
-  const menuItems = user ? (
-    user.role === 'admin' ? [
-      { text: 'Dashboard', icon: <Dashboard />, path: '/admin' },
-      { text: 'Rooms', icon: <MeetingRoom />, path: '/admin/rooms' },
-      { text: 'Users', icon: <Person />, path: '/admin/users' },
-      { text: 'Tickets', icon: <Report />, path: '/admin/tickets' },
-      { text: 'Payments', icon: <Payment />, path: '/admin/payments' },
-    ] : user.role === 'staff' ? [
-      { text: 'Dashboard', icon: <Dashboard />, path: '/staff/dashboard' },
-    ] : [
-      { text: 'Dashboard', icon: <Dashboard />, path: '/dashboard' },
-      { text: 'Browse Rooms', icon: <MeetingRoom />, path: '/rooms' },
-      { text: 'Report Issue', icon: <Report />, path: '/complaints/new' },
-    ]
-  ) : [
-    { text: 'Home', icon: <Home />, path: '/' },
-    { text: 'About', icon: <Info />, path: '/about' },
-    { text: 'Contact', icon: <ContactMail />, path: '/contact' },
-  ];
-
-  const drawer = (
-    <Box onClick={handleDrawerToggle} sx={{ textAlign: 'center' }}>
-      <Typography variant="h6" sx={{ my: 2, color: '#0a2351' }}>
-        Hostel Manager
-      </Typography>
-      <Divider />
-      <List>
-        {menuItems.map((item) => (
-          <ListItem
-            button
-            key={item.text}
-            onClick={() => navigate(item.path)}
-            sx={{
-              '&:hover': {
-                backgroundColor: '#f0f0f0',
-              }
-            }}
-          >
-            <ListItemIcon>{item.icon}</ListItemIcon>
-            <ListItemText primary={item.text} />
-          </ListItem>
-        ))}
-        {user && (
-          <ListItem
-            button
-            onClick={onLogout}
-            sx={{
-              '&:hover': {
-                backgroundColor: '#ffebee',
-              }
-            }}
-          >
-            <ListItemIcon><Logout color="error" /></ListItemIcon>
-            <ListItemText primary="Logout" />
-          </ListItem>
-        )}
-      </List>
-    </Box>
-  );
 
   return (
-    <Box sx={{ flexGrow: 1 }}>
-      <AppBar position="static" sx={{ backgroundColor: '#0a2351' }}>
-        <Toolbar>
-          <IconButton
-            color="inherit"
-            aria-label="open drawer"
-            edge="start"
-            onClick={handleDrawerToggle}
-            sx={{ mr: 2, display: { sm: 'none' } }}
+    <Box
+      sx={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 1100,
+        height: '64px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        px: { xs: 2, md: 4 },
+        backgroundColor: 'rgba(0, 0, 0, 0.4)',
+        backdropFilter: 'saturate(180%) blur(32px)',
+        borderBottom: 'none',
+        transition: 'all 0.3s ease',
+      }}
+    >
+      {/* Brand Logo with Glow Effect */}
+      <Box sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }} onClick={() => navigate('/')}>
+        <Typography
+          variant="h6"
+          sx={{
+            fontWeight: 700,
+            letterSpacing: '-0.02em',
+            color: '#fff',
+            position: 'relative',
+            '&:hover .glow-text': {
+              color: '#fff',
+              textShadow: '0 0 20px rgba(139, 92, 246, 0.8)',
+            },
+          }}
+        >
+          Hostel <Box component="span" className="glow-text" sx={{ color: '#a1a1aa', transition: 'all 0.3s ease' }}>Manager</Box>
+        </Typography>
+      </Box>
+
+      {/* Desktop Navigation */}
+      <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 1 }}>
+        {!user && (
+          <Box
+            sx={{ display: 'flex', alignItems: 'center', gap: 1, position: 'relative' }}
+            onMouseLeave={handleMouseLeave}
           >
-            <MenuIcon />
-          </IconButton>
-
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            🏨 Hostel Management System
-          </Typography>
-
-          {/* Desktop Menu */}
-          <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
-            {!user ? (
-              <>
-                <Button color="inherit" onClick={() => navigate('/')}>Home</Button>
-                <Button color="inherit" onClick={() => navigate('/about')}>About</Button>
-                <Button color="inherit" onClick={() => navigate('/contact')}>Contact</Button>
-                <Button color="inherit" onClick={() => navigate('/login')}>Login</Button>
-                <Button
-                  variant="contained"
-                  onClick={() => navigate('/register')}
+            {['Features', 'Company', 'Resources', 'Pricing'].map((item) => {
+              const isActive = activeDropdown === item.toLowerCase();
+              return (
+                <Box
+                  key={item}
+                  onMouseEnter={() => handleMouseEnter(item.toLowerCase())}
                   sx={{
-                    ml: 2,
-                    backgroundColor: 'white',
-                    color: '#0a2351',
-                    '&:hover': {
-                      backgroundColor: '#f0f0f0',
-                    }
+                    color: isActive ? '#fff' : '#a1a1aa',
+                    fontSize: '0.875rem',
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                    py: 1.5,
+                    px: 2,
+                    position: 'relative',
+                    transition: 'color 0.2s',
+                    '&:hover': { color: '#fff' },
                   }}
                 >
-                  Register
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button color="inherit" onClick={() => navigate(user.role === 'admin' ? '/admin' : '/dashboard')}>
-                  Dashboard
-                </Button>
-                <IconButton onClick={handleMenu} color="inherit">
-                  <Avatar sx={{ width: 32, height: 32, bgcolor: '#ff9800' }}>
-                    {user.name?.charAt(0).toUpperCase()}
-                  </Avatar>
-                </IconButton>
-                <Menu
-                  anchorEl={anchorEl}
-                  open={Boolean(anchorEl)}
-                  onClose={handleClose}
-                >
-                  <MenuItem onClick={() => { handleClose(); navigate('/profile'); }}>
-                    <Person sx={{ mr: 1 }} /> Profile
-                  </MenuItem>
-                  <MenuItem onClick={() => { handleClose(); onLogout(); }}>
-                    <Logout sx={{ mr: 1 }} /> Logout
-                  </MenuItem>
-                </Menu>
-              </>
-            )}
-          </Box>
-        </Toolbar>
-      </AppBar>
+                  <span style={{ position: 'relative', zIndex: 2 }}>{item}</span>
+                  {isActive && (
+                    <motion.div
+                      layoutId="nav-hover"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                        borderRadius: '8px',
+                        zIndex: 1
+                      }}
+                    />
+                  )}
+                </Box>
+              );
+            })}
 
-      {/* Mobile Drawer */}
-      <Drawer
-        variant="temporary"
-        open={mobileOpen}
-        onClose={handleDrawerToggle}
-        sx={{
-          display: { xs: 'block', sm: 'none' },
-          '& .MuiDrawer-paper': { width: 280 },
-        }}
+            {/* Animated Dropdown Panel */}
+            <AnimatePresence>
+              {activeDropdown && activeDropdown !== 'pricing' && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                  transition={{ duration: 0.2, ease: 'easeOut' }}
+                  style={{
+                    position: 'absolute',
+                    top: '100%',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    zIndex: 1200,
+                  }}
+                >
+                  <motion.div
+                    layout
+                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                    style={{
+                      width: activeDropdown === 'features' ? 600 : activeDropdown === 'resources' ? 500 : 250,
+                      backgroundColor: '#0a0a0a',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      borderRadius: '12px',
+                      boxShadow: '0 20px 40px rgba(0,0,0,0.5)',
+                      overflow: 'hidden',
+                      position: 'relative'
+                    }}
+                  >
+                    <AnimatePresence mode="popLayout" initial={false}>
+                      <motion.div
+                        key={activeDropdown}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 20 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        {renderDropdownContent()}
+                      </motion.div>
+                    </AnimatePresence>
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </Box>
+        )}
+      </Box>
+
+      {/* Auth / Profile Actions */}
+      <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 2 }}>
+        {!user ? (
+          <>
+            <Button
+              onClick={() => navigate('/login')}
+              sx={{ color: '#a1a1aa', '&:hover': { color: '#fff', backgroundColor: 'transparent' } }}
+            >
+              Sign In
+            </Button>
+            <Button
+              variant="contained"
+              onClick={() => navigate('/register')}
+              sx={{
+                borderRadius: '8px',
+                fontSize: '0.875rem',
+                backgroundColor: '#fff',
+                color: '#000',
+                '&:hover': { backgroundColor: '#f0f0f0' },
+              }}
+            >
+              Get Started
+            </Button>
+          </>
+        ) : (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Button
+              onClick={() => navigate(user.role === 'admin' ? '/admin' : user.role === 'staff' ? '/staff/dashboard' : '/dashboard')}
+              sx={{ color: '#fff' }}
+            >
+              Dashboard
+            </Button>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, cursor: 'pointer' }} onClick={() => navigate('/profile')}>
+              <Avatar sx={{ width: 32, height: 32, bgcolor: '#27272a', border: '1px solid rgba(255,255,255,0.1)' }}>
+                {user.name?.charAt(0).toUpperCase()}
+              </Avatar>
+            </Box>
+            <Button onClick={onLogout} size="small" variant="outlined" sx={{ borderColor: 'rgba(255,255,255,0.1)' }}>
+              Logout
+            </Button>
+          </Box>
+        )}
+      </Box>
+
+      {/* Mobile Menu Toggle */}
+      <IconButton
+        sx={{ display: { xs: 'flex', md: 'none' }, color: '#fff' }}
+        onClick={() => setMobileOpen(!mobileOpen)}
       >
-        {drawer}
-      </Drawer>
+        {mobileOpen ? <X size={24} /> : <MenuIcon size={24} />}
+      </IconButton>
+
+      {/* Basic Mobile Menu Overlay */}
+      {mobileOpen && (
+        <Box
+          sx={{
+            position: 'absolute',
+            top: '64px',
+            left: 0,
+            right: 0,
+            backgroundColor: '#0a0a0a',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+            p: 2,
+            display: { md: 'none' },
+            flexDirection: 'column',
+            gap: 2,
+          }}
+        >
+          {/* Extremely simplified mobile menu for brevity */}
+          {!user ? (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Button fullWidth variant="outlined" onClick={() => { navigate('/login'); setMobileOpen(false); }}>Sign In</Button>
+              <Button fullWidth variant="contained" onClick={() => { navigate('/register'); setMobileOpen(false); }}>Get Started</Button>
+            </Box>
+          ) : (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Button fullWidth variant="contained" onClick={() => { navigate(user.role === 'admin' ? '/admin' : '/dashboard'); setMobileOpen(false); }}>Dashboard</Button>
+              <Button fullWidth variant="outlined" onClick={() => { onLogout(); setMobileOpen(false); }}>Logout</Button>
+            </Box>
+          )}
+        </Box>
+      )}
     </Box>
   );
 };

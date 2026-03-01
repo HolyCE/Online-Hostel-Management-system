@@ -30,6 +30,10 @@ const step2Schema = yup.object().shape({
   confirmPassword: yup.string().oneOf([yup.ref('password'), null], 'Passwords must match').required('Confirm Password is required'),
 });
 
+const step3Schema = yup.object().shape({
+  agreeToTerms: yup.boolean().oneOf([true], 'You must accept the terms and conditions'),
+});
+
 const formVariants = {
   hidden: { opacity: 0, x: 50 },
   visible: { opacity: 1, x: 0, transition: { duration: 0.4 } },
@@ -45,7 +49,7 @@ const Register = () => {
   const [isSubmittingForm, setIsSubmittingForm] = useState(false);
 
   const { control, handleSubmit, trigger, getValues, watch, formState: { errors } } = useForm({
-    resolver: yupResolver(activeStep === 0 ? step1Schema : (activeStep === 1 ? step2Schema : null)),
+    resolver: yupResolver(activeStep === 0 ? step1Schema : (activeStep === 1 ? step2Schema : step3Schema)),
     mode: 'onChange',
     defaultValues: {
       name: '', email: '', phoneNumber: '', gender: '',
@@ -160,19 +164,38 @@ const Register = () => {
 
   return (
     <Container maxWidth="md">
-      <Box sx={{ mt: 6, mb: 8 }}>
+      <Box sx={{ mt: 10, mb: 10 }}>
         <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.5 }}>
-          <Paper elevation={0} sx={{ p: { xs: 3, md: 5 }, borderRadius: 4, boxShadow: '0 10px 40px rgba(0,0,0,0.06)' }}>
-            <Typography variant="h3" align="center" gutterBottom sx={{ color: '#0a2351', fontWeight: 800 }}>Create Account</Typography>
-            <Typography variant="body1" align="center" color="text.secondary" sx={{ mb: 4 }}>Join our modern hostel community today</Typography>
+          <Paper
+            elevation={0}
+            sx={{
+              p: { xs: 4, md: 6 },
+              borderRadius: 3,
+              bgcolor: '#0a0a0a',
+              border: '1px solid rgba(255,255,255,0.05)',
+            }}
+          >
+            <Typography variant="h3" align="center" gutterBottom sx={{ color: '#ffffff', fontWeight: 800, letterSpacing: '-0.02em' }}>
+              Create Account
+            </Typography>
+            <Typography variant="body1" align="center" sx={{ color: '#a1a1aa', mb: 5 }}>
+              Join our modern hostel community today
+            </Typography>
 
-            <Stepper activeStep={activeStep} sx={{ mb: 5, display: { xs: 'none', sm: 'flex' } }}>
+            <Stepper activeStep={activeStep} sx={{ mb: 6, display: { xs: 'none', sm: 'flex' } }}>
               {steps.map((label) => (
-                <Step key={label}><StepLabel>{label}</StepLabel></Step>
+                <Step key={label}>
+                  <StepLabel
+                    StepIconProps={{ sx: { color: activeStep >= steps.indexOf(label) ? '#ffffff !important' : 'rgba(255,255,255,0.2) !important' } }}
+                    sx={{ '& .MuiStepLabel-label': { color: activeStep >= steps.indexOf(label) ? '#ffffff !important' : 'rgba(255,255,255,0.4) !important' } }}
+                  >
+                    {label}
+                  </StepLabel>
+                </Step>
               ))}
             </Stepper>
 
-            {apiError && <Alert severity="error" sx={{ mb: 3 }} onClose={() => setApiError('')}>{apiError}</Alert>}
+            {apiError && <Alert severity="error" sx={{ mb: 4, borderRadius: 2 }} onClose={() => setApiError('')}>{apiError}</Alert>}
 
             <Box sx={{ minHeight: 300 }}>
               <AnimatePresence mode="wait">
@@ -180,22 +203,63 @@ const Register = () => {
               </AnimatePresence>
             </Box>
 
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4, pt: 3, borderTop: '1px solid', borderColor: 'divider' }}>
-              <Button variant="outlined" onClick={handleBack} disabled={activeStep === 0 || isSubmittingForm} sx={{ color: '#0a2351', borderColor: '#0a2351', px: 4, py: 1, borderRadius: 2 }}>Back</Button>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 5, pt: 4, borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+              <Button
+                variant="outlined"
+                onClick={handleBack}
+                disabled={activeStep === 0 || isSubmittingForm}
+                sx={{
+                  color: '#ffffff',
+                  borderColor: 'rgba(255,255,255,0.2)',
+                  px: 4, py: 1.5,
+                  borderRadius: 2,
+                  '&:disabled': { color: 'rgba(255,255,255,0.2)', borderColor: 'rgba(255,255,255,0.1)' }
+                }}
+              >
+                Back
+              </Button>
               {activeStep === steps.length - 1 ? (
-                <Button variant="contained" onClick={handleSubmit(onSubmitFinal)} disabled={!agreeToTerms || isSubmittingForm} sx={{ backgroundColor: '#0a2351', px: 4, py: 1, borderRadius: 2, '&:hover': { backgroundColor: '#1a3a6e' } }}>
+                <Button
+                  variant="contained"
+                  onClick={handleSubmit(onSubmitFinal)}
+                  disabled={!agreeToTerms || isSubmittingForm}
+                  sx={{
+                    backgroundColor: '#ffffff',
+                    color: '#000000',
+                    px: 4, py: 1.5,
+                    borderRadius: 2,
+                    fontWeight: 600,
+                    '&:hover': { backgroundColor: '#f4f4f5' },
+                    '&:disabled': { backgroundColor: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.3)' }
+                  }}
+                >
                   {isSubmittingForm ? <CircularProgress size={24} color="inherit" /> : 'Complete Registration'}
                 </Button>
               ) : (
-                <Button variant="contained" onClick={handleNext} sx={{ backgroundColor: '#0a2351', px: 4, py: 1, borderRadius: 2, '&:hover': { backgroundColor: '#1a3a6e' } }}>Next</Button>
+                <Button
+                  variant="contained"
+                  onClick={handleNext}
+                  sx={{
+                    backgroundColor: '#ffffff',
+                    color: '#000000',
+                    px: 5, py: 1.5,
+                    borderRadius: 2,
+                    fontWeight: 600,
+                    '&:hover': { backgroundColor: '#f4f4f5' }
+                  }}
+                >
+                  Next
+                </Button>
               )}
             </Box>
 
-            <Divider sx={{ my: 4 }}><Typography variant="body2" color="text.secondary">OR</Typography></Divider>
+            <Divider sx={{ my: 4, borderColor: 'rgba(255,255,255,0.1)' }}>
+              <Typography variant="body2" sx={{ color: '#a1a1aa' }}>OR</Typography>
+            </Divider>
             <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="body1" color="text.secondary">
+              <Typography variant="body1" sx={{ color: '#a1a1aa' }}>
                 Already have an account?{' '}
-                <Link to="/login" style={{ color: '#0a2351', textDecoration: 'none', fontWeight: 'bold' }}>Sign in here</Link>
+                <Link to="/login" style={{ color: '#ffffff', textDecoration: 'none', fontWeight: 600 }}>Sign in here</Link>
               </Typography>
             </Box>
           </Paper>
