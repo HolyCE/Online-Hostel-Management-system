@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Box, Typography, Button, Avatar, IconButton } from '@mui/material';
-import { Menu as MenuIcon, X } from 'lucide-react';
+import { Menu as MenuIcon, X, Sun, Moon } from 'lucide-react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useThemeContext } from '../../context/ThemeContext';
 
 const DropdownItem = ({ title, description, icon, onClick }) => (
   <Box
@@ -34,10 +35,12 @@ const DropdownItem = ({ title, description, icon, onClick }) => (
 const Navbar = ({ user, onLogout }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { mode, toggleTheme } = useThemeContext();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null);
 
   const isHome = location.pathname === '/';
+  const isDark = mode === 'dark';
 
   const handleMouseEnter = (menu) => setActiveDropdown(menu);
   const handleMouseLeave = () => setActiveDropdown(null);
@@ -87,7 +90,7 @@ const Navbar = ({ user, onLogout }) => {
         alignItems: 'center',
         justifyContent: 'space-between',
         px: { xs: 2, md: 4 },
-        backgroundColor: 'rgba(0, 0, 0, 0.4)',
+        backgroundColor: isDark ? 'rgba(0, 0, 0, 0.4)' : 'rgba(255, 255, 255, 0.6)',
         backdropFilter: 'saturate(180%) blur(32px)',
         borderBottom: 'none',
         transition: 'all 0.3s ease',
@@ -126,7 +129,7 @@ const Navbar = ({ user, onLogout }) => {
                   key={item}
                   onMouseEnter={() => handleMouseEnter(item.toLowerCase())}
                   sx={{
-                    color: isActive ? '#fff' : '#a1a1aa',
+                    color: isActive ? (isDark ? '#fff' : '#000') : (isDark ? '#a1a1aa' : '#6b7280'),
                     fontSize: '0.875rem',
                     fontWeight: 500,
                     cursor: 'pointer',
@@ -134,7 +137,7 @@ const Navbar = ({ user, onLogout }) => {
                     px: 2,
                     position: 'relative',
                     transition: 'color 0.2s',
-                    '&:hover': { color: '#fff' },
+                    '&:hover': { color: isDark ? '#fff' : '#000' },
                   }}
                 >
                   <span style={{ position: 'relative', zIndex: 2 }}>{item}</span>
@@ -162,15 +165,14 @@ const Navbar = ({ user, onLogout }) => {
             <AnimatePresence>
               {activeDropdown && activeDropdown !== 'pricing' && (
                 <motion.div
-                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                  initial={{ opacity: 0, y: 10, x: "-50%", scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, x: "-50%", scale: 1 }}
+                  exit={{ opacity: 0, y: 10, x: "-50%", scale: 0.95 }}
                   transition={{ duration: 0.2, ease: 'easeOut' }}
                   style={{
                     position: 'absolute',
                     top: '100%',
                     left: '50%',
-                    transform: 'translateX(-50%)',
                     zIndex: 1200,
                   }}
                 >
@@ -179,10 +181,10 @@ const Navbar = ({ user, onLogout }) => {
                     transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                     style={{
                       width: activeDropdown === 'features' ? 600 : activeDropdown === 'resources' ? 500 : 250,
-                      backgroundColor: '#0a0a0a',
-                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      backgroundColor: isDark ? '#0a0a0a' : '#ffffff',
+                      border: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)'}`,
                       borderRadius: '12px',
-                      boxShadow: '0 20px 40px rgba(0,0,0,0.5)',
+                      boxShadow: isDark ? '0 20px 40px rgba(0,0,0,0.5)' : '0 20px 40px rgba(0,0,0,0.1)',
                       overflow: 'hidden',
                       position: 'relative'
                     }}
@@ -208,11 +210,15 @@ const Navbar = ({ user, onLogout }) => {
 
       {/* Auth / Profile Actions */}
       <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 2 }}>
+        <IconButton onClick={toggleTheme} sx={{ color: '#a1a1aa', '&:hover': { color: '#fff' } }}>
+          {mode === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+        </IconButton>
+
         {!user ? (
           <>
             <Button
               onClick={() => navigate('/login')}
-              sx={{ color: '#a1a1aa', '&:hover': { color: '#fff', backgroundColor: 'transparent' } }}
+              sx={{ color: isDark ? '#a1a1aa' : '#6b7280', '&:hover': { color: isDark ? '#fff' : '#000', backgroundColor: 'transparent' } }}
             >
               Sign In
             </Button>
@@ -222,9 +228,9 @@ const Navbar = ({ user, onLogout }) => {
               sx={{
                 borderRadius: '8px',
                 fontSize: '0.875rem',
-                backgroundColor: '#fff',
-                color: '#000',
-                '&:hover': { backgroundColor: '#f0f0f0' },
+                backgroundColor: isDark ? '#fff' : '#000',
+                color: isDark ? '#000' : '#fff',
+                '&:hover': { backgroundColor: isDark ? '#f0f0f0' : '#333' },
               }}
             >
               Get Started
@@ -234,12 +240,12 @@ const Navbar = ({ user, onLogout }) => {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Button
               onClick={() => navigate(user.role === 'admin' ? '/admin' : user.role === 'staff' ? '/staff/dashboard' : '/dashboard')}
-              sx={{ color: '#fff' }}
+              sx={{ color: isDark ? '#fff' : '#000' }}
             >
               Dashboard
             </Button>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, cursor: 'pointer' }} onClick={() => navigate('/profile')}>
-              <Avatar sx={{ width: 32, height: 32, bgcolor: '#27272a', border: '1px solid rgba(255,255,255,0.1)' }}>
+              <Avatar sx={{ width: 32, height: 32, bgcolor: isDark ? '#27272a' : '#e5e7eb', color: isDark ? '#fff' : '#000', border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}` }}>
                 {user.name?.charAt(0).toUpperCase()}
               </Avatar>
             </Box>
@@ -266,14 +272,24 @@ const Navbar = ({ user, onLogout }) => {
             top: '64px',
             left: 0,
             right: 0,
-            backgroundColor: '#0a0a0a',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+            backgroundColor: isDark ? '#0a0a0a' : '#ffffff',
+            borderBottom: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`,
             p: 2,
             display: { md: 'none' },
             flexDirection: 'column',
             gap: 2,
           }}
         >
+          {/* Theme Toggle Mobile */}
+          <Button
+            fullWidth
+            variant="outlined"
+            onClick={toggleTheme}
+            startIcon={mode === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+          >
+            Switch to {mode === 'dark' ? 'Light' : 'Dark'} Mode
+          </Button>
+
           {/* Extremely simplified mobile menu for brevity */}
           {!user ? (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>

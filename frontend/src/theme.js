@@ -1,7 +1,5 @@
 import { createTheme } from '@mui/material/styles';
 
-import { createTheme } from '@mui/material/styles';
-
 export const getTheme = (mode) => {
   const isDark = mode === 'dark';
 
@@ -21,8 +19,8 @@ export const getTheme = (mode) => {
         contrastText: '#ffffff',
       },
       background: {
-        default: isDark ? '#000000' : '#ffffff',
-        paper: isDark ? '#0a0a0a' : '#f9fafb',
+        default: 'transparent',
+        paper: isDark ? '#0a0a0a' : '#ffffff',
       },
       text: {
         primary: isDark ? '#ffffff' : '#111827',
@@ -88,6 +86,7 @@ export const getTheme = (mode) => {
           root: {
             backgroundImage: 'none',
             backgroundColor: isDark ? '#0a0a0a' : '#ffffff',
+            boxShadow: isDark ? 'none' : '0 10px 40px -10px rgba(0,0,0,0.08)',
           },
         },
       },

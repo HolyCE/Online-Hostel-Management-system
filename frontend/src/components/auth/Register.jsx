@@ -12,6 +12,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
+import { useThemeContext } from '../../context/ThemeContext';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
@@ -42,6 +43,8 @@ const formVariants = {
 
 const Register = () => {
   const navigate = useNavigate();
+  const { mode } = useThemeContext();
+  const isDark = mode === 'dark';
   const [activeStep, setActiveStep] = useState(0);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -171,14 +174,14 @@ const Register = () => {
             sx={{
               p: { xs: 4, md: 6 },
               borderRadius: 3,
-              bgcolor: '#0a0a0a',
-              border: '1px solid rgba(255,255,255,0.05)',
+              bgcolor: isDark ? '#171717' : '#f5f5f5',
+              border: `1px solid ${isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.08)'}`,
             }}
           >
-            <Typography variant="h3" align="center" gutterBottom sx={{ color: '#ffffff', fontWeight: 800, letterSpacing: '-0.02em' }}>
+            <Typography variant="h3" align="center" gutterBottom sx={{ color: isDark ? '#ffffff' : '#000000', fontWeight: 800, letterSpacing: '-0.02em' }}>
               Create Account
             </Typography>
-            <Typography variant="body1" align="center" sx={{ color: '#a1a1aa', mb: 5 }}>
+            <Typography variant="body1" align="center" sx={{ color: isDark ? '#a1a1aa' : '#6b7280', mb: 5 }}>
               Join our modern hostel community today
             </Typography>
 
@@ -186,8 +189,8 @@ const Register = () => {
               {steps.map((label) => (
                 <Step key={label}>
                   <StepLabel
-                    StepIconProps={{ sx: { color: activeStep >= steps.indexOf(label) ? '#ffffff !important' : 'rgba(255,255,255,0.2) !important' } }}
-                    sx={{ '& .MuiStepLabel-label': { color: activeStep >= steps.indexOf(label) ? '#ffffff !important' : 'rgba(255,255,255,0.4) !important' } }}
+                    StepIconProps={{ sx: { color: activeStep >= steps.indexOf(label) ? (isDark ? '#ffffff !important' : '#000000 !important') : (isDark ? 'rgba(255,255,255,0.2) !important' : 'rgba(0,0,0,0.2) !important') } }}
+                    sx={{ '& .MuiStepLabel-label': { color: activeStep >= steps.indexOf(label) ? (isDark ? '#ffffff !important' : '#000000 !important') : (isDark ? 'rgba(255,255,255,0.4) !important' : 'rgba(0,0,0,0.4) !important') } }}
                   >
                     {label}
                   </StepLabel>
@@ -203,17 +206,17 @@ const Register = () => {
               </AnimatePresence>
             </Box>
 
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 5, pt: 4, borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 5, pt: 4, borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}` }}>
               <Button
                 variant="outlined"
                 onClick={handleBack}
                 disabled={activeStep === 0 || isSubmittingForm}
                 sx={{
-                  color: '#ffffff',
-                  borderColor: 'rgba(255,255,255,0.2)',
+                  color: isDark ? '#ffffff' : '#000000',
+                  borderColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)',
                   px: 4, py: 1.5,
                   borderRadius: 2,
-                  '&:disabled': { color: 'rgba(255,255,255,0.2)', borderColor: 'rgba(255,255,255,0.1)' }
+                  '&:disabled': { color: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)', borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }
                 }}
               >
                 Back
@@ -224,13 +227,13 @@ const Register = () => {
                   onClick={handleSubmit(onSubmitFinal)}
                   disabled={!agreeToTerms || isSubmittingForm}
                   sx={{
-                    backgroundColor: '#ffffff',
-                    color: '#000000',
+                    backgroundColor: isDark ? '#ffffff' : '#000000',
+                    color: isDark ? '#000000' : '#ffffff',
                     px: 4, py: 1.5,
                     borderRadius: 2,
                     fontWeight: 600,
-                    '&:hover': { backgroundColor: '#f4f4f5' },
-                    '&:disabled': { backgroundColor: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.3)' }
+                    '&:hover': { backgroundColor: isDark ? '#f4f4f5' : '#333333' },
+                    '&:disabled': { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)', color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)' }
                   }}
                 >
                   {isSubmittingForm ? <CircularProgress size={24} color="inherit" /> : 'Complete Registration'}
@@ -240,12 +243,12 @@ const Register = () => {
                   variant="contained"
                   onClick={handleNext}
                   sx={{
-                    backgroundColor: '#ffffff',
-                    color: '#000000',
+                    backgroundColor: isDark ? '#ffffff' : '#000000',
+                    color: isDark ? '#000000' : '#ffffff',
                     px: 5, py: 1.5,
                     borderRadius: 2,
                     fontWeight: 600,
-                    '&:hover': { backgroundColor: '#f4f4f5' }
+                    '&:hover': { backgroundColor: isDark ? '#f4f4f5' : '#333333' }
                   }}
                 >
                   Next
@@ -253,13 +256,13 @@ const Register = () => {
               )}
             </Box>
 
-            <Divider sx={{ my: 4, borderColor: 'rgba(255,255,255,0.1)' }}>
-              <Typography variant="body2" sx={{ color: '#a1a1aa' }}>OR</Typography>
+            <Divider sx={{ my: 4, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }}>
+              <Typography variant="body2" sx={{ color: isDark ? '#a1a1aa' : '#6b7280' }}>OR</Typography>
             </Divider>
             <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="body1" sx={{ color: '#a1a1aa' }}>
+              <Typography variant="body1" sx={{ color: isDark ? '#a1a1aa' : '#6b7280' }}>
                 Already have an account?{' '}
-                <Link to="/login" style={{ color: '#ffffff', textDecoration: 'none', fontWeight: 600 }}>Sign in here</Link>
+                <Link to="/login" style={{ color: isDark ? '#ffffff' : '#000000', textDecoration: 'none', fontWeight: 600 }}>Sign in here</Link>
               </Typography>
             </Box>
           </Paper>
