@@ -1,278 +1,181 @@
 import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import * as yup from 'yup';
+import { motion } from 'framer-motion';
 import {
-  Container,
-  Paper,
-  TextField,
-  Button,
-  Typography,
-  Box,
-  Alert,
-  InputAdornment,
-  IconButton,
-  Divider,
+  Container, Paper, TextField, Button, Typography, Box, Alert,
+  InputAdornment, IconButton, Divider, CircularProgress
 } from '@mui/material';
-import {
-  Visibility,
-  VisibilityOff,
-  Email,
-  Lock,
-  Login as LoginIcon,
-} from '@mui/icons-material';
+import { Visibility, VisibilityOff, Email, Lock, Login as LoginIcon } from '@mui/icons-material';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
+import { useAuth } from '../../context/AuthContext';
+import { useThemeContext } from '../../context/ThemeContext';
+
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+
+const schema = yup.object().shape({
+  email: yup.string().email('Please enter a valid email address').required('Email is required'),
+  password: yup.string().required('Password is required'),
+});
 
 const Login = () => {
   const navigate = useNavigate();
+  const { login } = useAuth(); // Assuming login logic will eventually hit context too
+  const { mode } = useThemeContext();
+  const isDark = mode === 'dark';
   const [showPassword, setShowPassword] = useState(false);
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-  });
-  const [errors, setErrors] = useState({});
-  const [loading, setLoading] = useState(false);
   const [apiError, setApiError] = useState('');
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-    // Clear error for this field when user starts typing
-    if (errors[e.target.name]) {
-      setErrors({
-        ...errors,
-        [e.target.name]: null,
-      });
-    }
-    // Clear API error when user types
-    if (apiError) setApiError('');
-  };
+  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm({
+    resolver: yupResolver(schema),
+    defaultValues: { email: '', password: '' }
+  });
 
-  const validateForm = () => {
-    const newErrors = {};
-    if (!formData.email) {
-      newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email is invalid';
-    }
-    if (!formData.password) {
-      newErrors.password = 'Password is required';
-    }
-    return newErrors;
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const newErrors = validateForm();
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
-
-    setLoading(true);
+  const onSubmit = async (data) => {
     setApiError('');
-
     try {
-      // Get API URL from environment or use default
-      const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
-      
-      console.log('Attempting login with:', { email: formData.email });
-      
-      const response = await axios.post(`${API_URL}/auth/login`, {
-        email: formData.email,
-        password: formData.password
-      });
-
-      console.log('Login response:', response.data);
+      const response = await axios.post(`${API_URL}/auth/login`, data);
 
       if (response.data.success) {
-        // Save token to localStorage
         localStorage.setItem('token', response.data.token);
-        
-        // Optional: Save user data
         localStorage.setItem('user', JSON.stringify(response.data.user));
-        
-        // Show success message briefly
-        setLoading(false);
-        
-        // Redirect to dashboard
-        navigate('/dashboard');
+
+        // Mock fallback routing based on role
+        const role = response.data.user?.role;
+        if (role === 'admin') navigate('/admin');
+        else if (role === 'staff') navigate('/staff/dashboard');
+        else navigate('/dashboard');
       } else {
         setApiError(response.data.message || 'Login failed');
-        setLoading(false);
       }
     } catch (error) {
-      console.error('Login error:', error);
-      
-      // Handle different error types
       if (error.code === 'ECONNREFUSED') {
-        setApiError('Cannot connect to server. Please make sure the backend is running.');
+        setApiError('Cannot connect to server. Ensure the backend is running.');
       } else if (error.response) {
-        // The request was made and the server responded with a status code outside of 2xx
-        setApiError(error.response.data?.message || 'Login failed. Please check your credentials.');
-      } else if (error.request) {
-        // The request was made but no response was received
-        setApiError('No response from server. Please check your connection.');
+        setApiError(error.response.data?.message || 'Login failed. Check your credentials.');
       } else {
-        // Something happened in setting up the request
-        setApiError('An error occurred. Please try again.');
+        setApiError('An unexpected error occurred. Please try again.');
       }
-      
-      setLoading(false);
     }
   };
 
   return (
     <Container maxWidth="sm">
-      <Box
-        sx={{
-          mt: 8,
-          mb: 4,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-        }}
-      >
-        <Paper
-          elevation={3}
-          sx={{
-            p: 4,
-            width: '100%',
-            borderRadius: 2,
-          }}
+      <Box sx={{ mt: 10, mb: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+          style={{ width: '100%' }}
         >
-          <Box sx={{ textAlign: 'center', mb: 4 }}>
-            <Typography variant="h4" gutterBottom sx={{ color: '#0a2351', fontWeight: 'bold' }}>
-              Welcome Back
-            </Typography>
-            <Typography variant="body1" color="textSecondary">
-              Sign in to continue to your account
-            </Typography>
-          </Box>
+          <Paper
+            elevation={0}
+            sx={{
+              p: { xs: 4, md: 6 },
+              width: '100%',
+              borderRadius: 3,
+              bgcolor: isDark ? '#171717' : '#f5f5f5',
+              border: `1px solid ${isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.08)'}`,
+            }}
+          >
+            <Box sx={{ textAlign: 'center', mb: 5 }}>
+              <Typography variant="h3" gutterBottom sx={{ color: isDark ? '#ffffff' : '#000000', fontWeight: 800, letterSpacing: '-0.02em' }}>
+                Welcome Back
+              </Typography>
+              <Typography variant="body1" sx={{ color: isDark ? '#a1a1aa' : '#6b7280' }}>
+                Sign in to manage your hostel experience
+              </Typography>
+            </Box>
 
-          {apiError && (
-            <Alert severity="error" sx={{ mb: 2 }} onClose={() => setApiError('')}>
-              {apiError}
-            </Alert>
-          )}
+            {apiError && (
+              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
+                <Alert severity="error" sx={{ mb: 4, borderRadius: 2 }} onClose={() => setApiError('')}>
+                  {apiError}
+                </Alert>
+              </motion.div>
+            )}
 
-          <form onSubmit={handleSubmit}>
-            <TextField
-              fullWidth
-              label="Email Address"
-              name="email"
-              type="email"
-              value={formData.email}
-              onChange={handleChange}
-              error={!!errors.email}
-              helperText={errors.email}
-              margin="normal"
-              disabled={loading}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Email sx={{ color: '#0a2351' }} />
-                  </InputAdornment>
-                ),
-              }}
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  '&.Mui-focused fieldset': {
-                    borderColor: '#0a2351',
-                  },
-                },
-              }}
-            />
+            <form onSubmit={handleSubmit(onSubmit)}>
+              <TextField
+                fullWidth
+                label="Email Address"
+                {...register('email')}
+                error={!!errors.email}
+                helperText={errors.email?.message}
+                margin="normal"
+                InputProps={{
+                  startAdornment: <InputAdornment position="start"><Email sx={{ color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)' }} /></InputAdornment>,
+                }}
+                sx={{ mb: 3 }}
+              />
 
-            <TextField
-              fullWidth
-              label="Password"
-              name="password"
-              type={showPassword ? 'text' : 'password'}
-              value={formData.password}
-              onChange={handleChange}
-              error={!!errors.password}
-              helperText={errors.password}
-              margin="normal"
-              disabled={loading}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Lock sx={{ color: '#0a2351' }} />
-                  </InputAdornment>
-                ),
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      onClick={() => setShowPassword(!showPassword)}
-                      edge="end"
-                      disabled={loading}
-                    >
-                      {showPassword ? <VisibilityOff /> : <Visibility />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
-            />
+              <TextField
+                fullWidth
+                label="Password"
+                type={showPassword ? 'text' : 'password'}
+                {...register('password')}
+                error={!!errors.password}
+                helperText={errors.password?.message}
+                margin="normal"
+                InputProps={{
+                  startAdornment: <InputAdornment position="start"><Lock sx={{ color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)' }} /></InputAdornment>,
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton onClick={() => setShowPassword(!showPassword)} edge="end" sx={{ color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)' }}>
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{ mb: 1 }}
+              />
 
-            <Box sx={{ mt: 2, textAlign: 'right' }}>
-              <Link
-                to="/forgot-password"
-                style={{
-                  color: '#0a2351',
-                  textDecoration: 'none',
-                  fontSize: '0.9rem',
+              <Box sx={{ mt: 1, textAlign: 'right' }}>
+                <Link to="/forgot-password" style={{ color: isDark ? '#ffffff' : '#000000', textDecoration: 'none', fontSize: '0.85rem', fontWeight: 500, opacity: 0.8 }}>
+                  Forgot Password?
+                </Link>
+              </Box>
+
+              <Button
+                type="submit"
+                fullWidth
+                variant="contained"
+                disabled={isSubmitting}
+                size="large"
+                sx={{
+                  mt: 5, mb: 3, py: 1.8,
+                  backgroundColor: isDark ? '#ffffff' : '#000000',
+                  color: isDark ? '#000000' : '#ffffff',
+                  borderRadius: 2,
+                  fontWeight: 600,
+                  fontSize: '1rem',
+                  textTransform: 'none',
+                  border: '1px solid transparent',
+                  '&:hover': { backgroundColor: isDark ? '#f4f4f5' : '#333333', transform: 'translateY(-1px)' },
+                  transition: 'all 0.2s'
                 }}
               >
-                Forgot Password?
-              </Link>
-            </Box>
+                {isSubmitting ? <CircularProgress size={26} color="inherit" /> : 'Log In'}
+                {!isSubmitting && <LoginIcon sx={{ ml: 1, fontSize: '1.2rem' }} />}
+              </Button>
 
-            <Button
-              type="submit"
-              fullWidth
-              variant="contained"
-              disabled={loading}
-              sx={{
-                mt: 3,
-                mb: 2,
-                py: 1.5,
-                backgroundColor: '#0a2351',
-                '&:hover': {
-                  backgroundColor: '#1a3a6e',
-                },
-                '&:disabled': {
-                  backgroundColor: '#cccccc',
-                },
-              }}
-            >
-              {loading ? 'Signing in...' : 'Sign In'}
-              {!loading && <LoginIcon sx={{ ml: 1 }} />}
-            </Button>
+              <Divider sx={{ my: 4, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }}>
+                <Typography variant="body2" sx={{ color: isDark ? '#a1a1aa' : '#6b7280' }}>OR</Typography>
+              </Divider>
 
-            <Divider sx={{ my: 2 }}>
-              <Typography variant="body2" color="textSecondary">
-                OR
-              </Typography>
-            </Divider>
-
-            <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="body2" color="textSecondary">
-                Don't have an account?{' '}
-                <Link
-                  to="/register"
-                  style={{
-                    color: '#0a2351',
-                    textDecoration: 'none',
-                    fontWeight: 'bold',
-                  }}
-                >
-                  Register here
-                </Link>
-              </Typography>
-            </Box>
-          </form>
-        </Paper>
+              <Box sx={{ textAlign: 'center' }}>
+                <Typography variant="body1" sx={{ color: isDark ? '#a1a1aa' : '#6b7280' }}>
+                  New to the hostel?{' '}
+                  <Link to="/register" style={{ color: isDark ? '#ffffff' : '#000000', textDecoration: 'none', fontWeight: 600 }}>
+                    Create an account
+                  </Link>
+                </Typography>
+              </Box>
+            </form>
+          </Paper>
+        </motion.div>
       </Box>
     </Container>
   );

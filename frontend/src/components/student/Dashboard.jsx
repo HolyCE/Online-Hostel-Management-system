@@ -151,21 +151,21 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
-import { 
-  AreaChart, 
-  Area, 
-  BarChart, 
-  Bar, 
-  LineChart, 
-  Line, 
-  PieChart, 
-  Pie, 
-  Cell, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip as ChartTooltip, 
-  Legend, 
+import {
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  LineChart,
+  Line,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as ChartTooltip,
+  Legend,
   ResponsiveContainer,
   RadarChart,
   Radar,
@@ -223,14 +223,14 @@ const maintenanceRequests = [
 const Dashboard = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [timeRange, setTimeRange] = useState('month');
   const [selectedChart, setSelectedChart] = useState('all');
   const [showStats, setShowStats] = useState(true);
   const [activeTab, setActiveTab] = useState(0);
-  
+
   // User's actual data from backend
   const [userRoom, setUserRoom] = useState(null);
   const [availableRooms, setAvailableRooms] = useState([]);
@@ -253,7 +253,7 @@ const Dashboard = () => {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      
+
       const [roomRes, roomsRes, paymentsRes, ticketsRes] = await Promise.all([
         axios.get(`${API_URL}/rooms/student/my-room`).catch(() => ({ data: { data: null } })),
         axios.get(`${API_URL}/rooms/available`).catch(() => ({ data: { data: [] } })),
@@ -301,10 +301,7 @@ const Dashboard = () => {
     setActiveTab(newValue);
   };
 
-  const filteredRooms = availableRooms.filter(room =>
-    room.roomNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    room.blockName?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredRooms = availableRooms;
 
   if (loading) {
     return (
@@ -349,7 +346,7 @@ const Dashboard = () => {
               </Typography>
             </Box>
             <Typography variant="h3" className="welcome-title">
-              Hello, {user?.name || 'Barbara'}! 
+              Hello, {user?.name || 'Barbara'}!
               <span className="title-emoji">🏠</span>
             </Typography>
             <Typography variant="body1" className="welcome-subtitle">
@@ -359,19 +356,19 @@ const Dashboard = () => {
 
           <Box className="header-right">
             <Box className="time-range-selector">
-              <Button 
+              <Button
                 className={`time-btn ${timeRange === 'week' ? 'active' : ''}`}
                 onClick={() => setTimeRange('week')}
               >
                 Week
               </Button>
-              <Button 
+              <Button
                 className={`time-btn ${timeRange === 'month' ? 'active' : ''}`}
                 onClick={() => setTimeRange('month')}
               >
                 Month
               </Button>
-              <Button 
+              <Button
                 className={`time-btn ${timeRange === 'semester' ? 'active' : ''}`}
                 onClick={() => setTimeRange('semester')}
               >
@@ -430,8 +427,8 @@ const Dashboard = () => {
                           </Typography>
                         </>
                       ) : (
-                        <Button 
-                          size="small" 
+                        <Button
+                          size="small"
                           className="apply-btn"
                           onClick={() => navigate('/rooms')}
                         >
@@ -466,7 +463,7 @@ const Dashboard = () => {
                     <Box className="stat-trend">
                       <Box className="trend-indicator up">
                         <TrendingUp />
-                        <Typography variant="body2'>+12.5%</Typography>
+                        <Typography variant="body2">+12.5%</Typography>
                       </Box>
                       <Typography variant="caption" className="trend-period">
                         This semester
@@ -527,19 +524,19 @@ const Dashboard = () => {
                       </Typography>
                     </Box>
                     <Box className="chart-actions">
-                      <Button 
+                      <Button
                         className={`chart-action-btn ${selectedChart === 'all' ? 'active' : ''}`}
                         onClick={() => setSelectedChart('all')}
                       >
                         All
                       </Button>
-                      <Button 
+                      <Button
                         className={`chart-action-btn ${selectedChart === 'accommodation' ? 'active' : ''}`}
                         onClick={() => setSelectedChart('accommodation')}
                       >
                         Accommodation
                       </Button>
-                      <Button 
+                      <Button
                         className={`chart-action-btn ${selectedChart === 'food' ? 'active' : ''}`}
                         onClick={() => setSelectedChart('food')}
                       >
@@ -552,30 +549,30 @@ const Dashboard = () => {
                       <AreaChart data={spendingData}>
                         <defs>
                           <linearGradient id="accommodationGradient" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#6366F1" stopOpacity={0.3}/>
-                            <stop offset="95%" stopColor="#6366F1" stopOpacity={0}/>
+                            <stop offset="5%" stopColor="#6366F1" stopOpacity={0.3} />
+                            <stop offset="95%" stopColor="#6366F1" stopOpacity={0} />
                           </linearGradient>
                           <linearGradient id="foodGradient" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.3}/>
-                            <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0}/>
+                            <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.3} />
+                            <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0} />
                           </linearGradient>
                           <linearGradient id="utilitiesGradient" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#EC4899" stopOpacity={0.3}/>
-                            <stop offset="95%" stopColor="#EC4899" stopOpacity={0}/>
+                            <stop offset="5%" stopColor="#EC4899" stopOpacity={0.3} />
+                            <stop offset="95%" stopColor="#EC4899" stopOpacity={0} />
                           </linearGradient>
                         </defs>
                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                        <XAxis 
-                          dataKey="month" 
+                        <XAxis
+                          dataKey="month"
                           stroke="rgba(255,255,255,0.5)"
                           tick={{ fill: 'rgba(255,255,255,0.7)' }}
                         />
-                        <YAxis 
+                        <YAxis
                           stroke="rgba(255,255,255,0.5)"
                           tick={{ fill: 'rgba(255,255,255,0.7)' }}
                         />
-                        <ChartTooltip 
-                          contentStyle={{ 
+                        <ChartTooltip
+                          contentStyle={{
                             backgroundColor: 'rgba(17, 24, 39, 0.95)',
                             border: '1px solid rgba(255,255,255,0.1)',
                             borderRadius: '12px',
@@ -585,35 +582,35 @@ const Dashboard = () => {
                         />
                         {selectedChart === 'all' ? (
                           <>
-                            <Area 
-                              type="monotone" 
-                              dataKey="accommodation" 
+                            <Area
+                              type="monotone"
+                              dataKey="accommodation"
                               stackId="1"
                               stroke="#6366F1"
                               strokeWidth={2}
-                              fill="url(#accommodationGradient)" 
+                              fill="url(#accommodationGradient)"
                             />
-                            <Area 
-                              type="monotone" 
-                              dataKey="food" 
+                            <Area
+                              type="monotone"
+                              dataKey="food"
                               stackId="1"
                               stroke="#8B5CF6"
                               strokeWidth={2}
-                              fill="url(#foodGradient)" 
+                              fill="url(#foodGradient)"
                             />
-                            <Area 
-                              type="monotone" 
-                              dataKey="utilities" 
+                            <Area
+                              type="monotone"
+                              dataKey="utilities"
                               stackId="1"
                               stroke="#EC4899"
                               strokeWidth={2}
-                              fill="url(#utilitiesGradient)" 
+                              fill="url(#utilitiesGradient)"
                             />
                           </>
                         ) : (
-                          <Area 
-                            type="monotone" 
-                            dataKey={selectedChart} 
+                          <Area
+                            type="monotone"
+                            dataKey={selectedChart}
                             stroke={selectedChart === 'accommodation' ? '#6366F1' : selectedChart === 'food' ? '#8B5CF6' : '#EC4899'}
                             strokeWidth={3}
                             fill={`url(#${selectedChart}Gradient)`}
@@ -650,12 +647,12 @@ const Dashboard = () => {
                                 {item.name}
                               </Typography>
                               <Box className="category-progress">
-                                <Box 
-                                  className="progress-bar" 
-                                  sx={{ 
+                                <Box
+                                  className="progress-bar"
+                                  sx={{
                                     width: `${(item.value / 50000) * 100}%`,
                                     bgcolor: item.color,
-                                  }} 
+                                  }}
                                 />
                               </Box>
                             </Box>
@@ -689,7 +686,7 @@ const Dashboard = () => {
                   </Typography>
                   <Grid container spacing={2} className="quick-actions-grid">
                     <Grid item xs={6} sm={3}>
-                      <Button 
+                      <Button
                         className="quick-action-btn"
                         onClick={() => navigate('/rooms')}
                       >
@@ -700,7 +697,7 @@ const Dashboard = () => {
                       </Button>
                     </Grid>
                     <Grid item xs={6} sm={3}>
-                      <Button 
+                      <Button
                         className="quick-action-btn"
                         onClick={() => navigate('/payments')}
                       >
@@ -711,7 +708,7 @@ const Dashboard = () => {
                       </Button>
                     </Grid>
                     <Grid item xs={6} sm={3}>
-                      <Button 
+                      <Button
                         className="quick-action-btn"
                         onClick={() => navigate('/complaints')}
                       >
@@ -722,7 +719,7 @@ const Dashboard = () => {
                       </Button>
                     </Grid>
                     <Grid item xs={6} sm={3}>
-                      <Button 
+                      <Button
                         className="quick-action-btn"
                         onClick={() => navigate('/profile')}
                       >
@@ -764,8 +761,8 @@ const Dashboard = () => {
                         <Fade in timeout={1000 + index * 100}>
                           <Box className="hostel-stat-item">
                             <Box className="hostel-stat-header">
-                              <Box 
-                                className="hostel-stat-dot" 
+                              <Box
+                                className="hostel-stat-dot"
                                 sx={{ bgcolor: item.color }}
                               />
                               <Typography variant="body2" className="hostel-stat-label">
@@ -984,8 +981,8 @@ const Dashboard = () => {
                   </Box>
                   {payments.length === 0 ? (
                     <Box className="empty-state">
-                      <img 
-                        src="https://illustrations.popsy.co/amber/payment.svg" 
+                      <img
+                        src="https://illustrations.popsy.co/amber/payment.svg"
                         alt="No payments"
                         className="empty-image"
                       />
