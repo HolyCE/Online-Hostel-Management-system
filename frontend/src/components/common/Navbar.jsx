@@ -111,7 +111,7 @@ const Navbar = ({ user, onLogout }) => {
             },
           }}
         >
-          Hostel <Box component="span" className="glow-text" sx={{ color: '#a1a1aa', transition: 'all 0.3s ease' }}>Manager</Box>
+          Hostel <Box component="span" className="glow-text" sx={{ color: '#fdfafa', transition: 'all 0.3s ease' }}>Manager</Box>
         </Typography>
       </Box>
 

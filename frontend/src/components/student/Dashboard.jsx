@@ -17,27 +17,18 @@ import {
   Tabs,
   TextField,
   InputAdornment,
-  MenuItem,
-  Select,
-  FormControl,
-  InputLabel,
   Badge,
   Divider,
   AvatarGroup,
   Tooltip,
-  Zoom,
   Fade,
-  Grow,
-  Slide,
+  Zoom,
 } from '@mui/material';
 import {
   MeetingRoom,
   Payment,
   Report,
   Search,
-  FilterList,
-  GridView,
-  ViewList,
   Favorite,
   FavoriteBorder,
   LocationOn,
@@ -55,11 +46,14 @@ import {
   Home,
   Star,
   StarBorder,
-  MoreVert,
   Refresh,
+  Notifications,
+  Person,
+  Receipt,
+  AccessTime,
+  MoreVert,
   Download,
   Share,
-  Notifications,
   Settings,
   Logout,
   Add,
@@ -77,15 +71,12 @@ import {
   LocalParking,
   Kitchen,
   Security,
-  AccessTime,
   EventAvailable,
   EventBusy,
   Assessment,
   Dashboard as DashboardIcon,
-  Person,
   Group,
   Room,
-  Receipt,
   SupportAgent,
   CleaningServices,
   Restaurant,
@@ -102,20 +93,7 @@ import {
   ChildCare,
   Checkroom,
   LocalLaundryService,
-  Dry,
-  Iron,
-  Microwave,
   Coffee,
-  Tapas,
-  Liquor,
-  WineBar,
-  SportsBar,
-  Nightlife,
-  Casino,
-  GolfCourse,
-  Spa,
-  Deck,
-  Landscape,
   Waves,
   BeachAccess,
   Terrain,
@@ -129,24 +107,6 @@ import {
   Castle,
   Tent,
   Campsites,
-  RVHookup,
-  GolfCourse as Golf,
-  Tennis,
-  SportsBasketball,
-  SportsSoccer,
-  SportsTennis,
-  SportsVolleyball,
-  SportsGymnastics,
-  SportsHandball,
-  SportsRugby,
-  SportsBaseball,
-  SportsFootball,
-  SportsHockey,
-  SportsCricket,
-  SportsMma,
-  SportsKabaddi,
-  SportsEsports,
-  SportsBar as Sports,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -172,53 +132,10 @@ import {
   PolarGrid,
   PolarAngleAxis,
   PolarRadiusAxis,
-  ComposedChart,
-  Scatter,
 } from 'recharts';
 import './Dashboard.css';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
-
-// Sample data for hostel management
-const spendingData = [
-  { month: 'AUG', accommodation: 45000, food: 12500, utilities: 8500, total: 66000 },
-  { month: 'SEP', accommodation: 45000, food: 13200, utilities: 8200, total: 66400 },
-  { month: 'OCT', accommodation: 45000, food: 12800, utilities: 8900, total: 66700 },
-  { month: 'NOV', accommodation: 45000, food: 13500, utilities: 9100, total: 67600 },
-  { month: 'DEC', accommodation: 45000, food: 14200, utilities: 9500, total: 68700 },
-];
-
-const categoryData = [
-  { name: 'Accommodation Fee', value: 45000, color: '#6366F1', icon: '🏠', change: '+0%' },
-  { name: 'Food & Dining', value: 14200, color: '#8B5CF6', icon: '🍽️', change: '+12%' },
-  { name: 'Utilities', value: 9500, color: '#EC4899', icon: '💡', change: '+8%' },
-  { name: 'Laundry', value: 3200, color: '#14B8A6', icon: '🧺', change: '+5%' },
-  { name: 'Activities', value: 2800, color: '#F97316', icon: '🎮', change: '+15%' },
-];
-
-const roomStatsData = [
-  { status: 'Available Rooms', count: 24, change: '+3', trend: 'up', color: '#10B981' },
-  { status: 'Occupied Rooms', count: 156, change: '+12', trend: 'up', color: '#6366F1' },
-  { status: 'Maintenance', count: 8, change: '-2', trend: 'down', color: '#F59E0B' },
-  { status: 'Cleaning', count: 12, change: '+1', trend: 'up', color: '#8B5CF6' },
-];
-
-const recentBookings = [
-  { id: '#BK-2024-001', student: 'John Doe', room: 'B204', amount: 45000, status: 'confirmed', date: '2024-02-24', checkIn: '2024-03-01', checkOut: '2024-05-31' },
-  { id: '#BK-2024-002', student: 'Jane Smith', room: 'A108', amount: 55000, status: 'pending', date: '2024-02-23', checkIn: '2024-03-05', checkOut: '2024-06-05' },
-  { id: '#BK-2024-003', student: 'Mike Johnson', room: 'C315', amount: 38000, status: 'confirmed', date: '2024-02-22', checkIn: '2024-03-10', checkOut: '2024-06-10' },
-  { id: '#BK-2024-004', student: 'Sarah Williams', room: 'D401', amount: 62000, status: 'completed', date: '2024-02-21', checkIn: '2024-02-01', checkOut: '2024-04-30' },
-  { id: '#BK-2024-005', student: 'Alex Brown', room: 'E203', amount: 41000, status: 'pending', date: '2024-02-20', checkIn: '2024-03-15', checkOut: '2024-06-15' },
-  { id: '#BK-2024-006', student: 'Emily Davis', room: 'F102', amount: 48000, status: 'confirmed', date: '2024-02-19', checkIn: '2024-03-20', checkOut: '2024-06-20' },
-];
-
-const maintenanceRequests = [
-  { id: '#MT-001', student: 'John Doe', room: 'B204', issue: 'Broken AC', priority: 'high', status: 'in-progress', date: '2024-02-24' },
-  { id: '#MT-002', student: 'Jane Smith', room: 'A108', issue: 'Leaking Pipe', priority: 'urgent', status: 'pending', date: '2024-02-23' },
-  { id: '#MT-003', student: 'Mike Johnson', room: 'C315', issue: 'Light not working', priority: 'low', status: 'resolved', date: '2024-02-22' },
-  { id: '#MT-004', student: 'Sarah Williams', room: 'D401', issue: 'WiFi issue', priority: 'medium', status: 'in-progress', date: '2024-02-21' },
-  { id: '#MT-005', student: 'Alex Brown', room: 'E203', issue: 'Door lock broken', priority: 'high', status: 'pending', date: '2024-02-20' },
-];
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -226,39 +143,45 @@ const Dashboard = () => {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [timeRange, setTimeRange] = useState('month');
-  const [selectedChart, setSelectedChart] = useState('all');
-  const [showStats, setShowStats] = useState(true);
   const [activeTab, setActiveTab] = useState(0);
+  const [selectedChart, setSelectedChart] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [favorites, setFavorites] = useState([]);
 
-  // User's actual data from backend
+  // Real data from backend
   const [userRoom, setUserRoom] = useState(null);
   const [availableRooms, setAvailableRooms] = useState([]);
   const [payments, setPayments] = useState([]);
   const [tickets, setTickets] = useState([]);
+  const [roommates, setRoommates] = useState([]);
   const [stats, setStats] = useState({
     totalSpent: 0,
     pendingTickets: 0,
     resolvedTickets: 0,
     totalPayments: 0,
     daysRemaining: 180,
-    roomNumber: null,
-    blockName: null,
+    monthlySpending: [],
+    categoryBreakdown: [],
+    occupancyRate: 78,
   });
 
   useEffect(() => {
     fetchDashboardData();
+    const interval = setInterval(fetchDashboardData, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
+      const token = localStorage.getItem('token');
+      const headers = { Authorization: `Bearer ${token}` };
 
       const [roomRes, roomsRes, paymentsRes, ticketsRes] = await Promise.all([
-        axios.get(`${API_URL}/rooms/student/my-room`).catch(() => ({ data: { data: null } })),
+        axios.get(`${API_URL}/rooms/student/my-room`, { headers }).catch(() => ({ data: { data: null } })),
         axios.get(`${API_URL}/rooms/available`).catch(() => ({ data: { data: [] } })),
-        axios.get(`${API_URL}/payments/my-payments`).catch(() => ({ data: { data: [] } })),
-        axios.get(`${API_URL}/tickets/my-tickets`).catch(() => ({ data: { data: [] } })),
+        axios.get(`${API_URL}/payments/my-payments`, { headers }).catch(() => ({ data: { data: [] } })),
+        axios.get(`${API_URL}/tickets/my-tickets`, { headers }).catch(() => ({ data: { data: [] } })),
       ]);
 
       const room = roomRes.data.data;
@@ -271,9 +194,41 @@ const Dashboard = () => {
       setPayments(paymentsList);
       setTickets(ticketsList);
 
+      if (room?.occupants?.length > 0) {
+        setRoommates(room.occupants.filter(o => o._id !== user?.id));
+      }
+
       const totalSpent = paymentsList
         .filter(p => p.status === 'success')
         .reduce((sum, p) => sum + p.amount, 0);
+
+      const last6Months = Array.from({ length: 6 }, (_, i) => {
+        const d = new Date();
+        d.setMonth(d.getMonth() - i);
+        return d.toLocaleString('default', { month: 'short' });
+      }).reverse();
+
+      const monthlyData = last6Months.map(month => {
+        const monthPayments = paymentsList.filter(p => {
+          const paymentDate = new Date(p.createdAt);
+          return paymentDate.toLocaleString('default', { month: 'short' }) === month;
+        });
+        
+        return {
+          month,
+          accommodation: monthPayments.filter(p => p.paidFor === 'accommodation').reduce((sum, p) => sum + p.amount, 0),
+          food: monthPayments.filter(p => p.paidFor === 'food').reduce((sum, p) => sum + p.amount, 0),
+          utilities: monthPayments.filter(p => p.paidFor === 'utilities').reduce((sum, p) => sum + p.amount, 0),
+          total: monthPayments.reduce((sum, p) => sum + p.amount, 0),
+        };
+      });
+
+      const categories = [
+        { name: 'Accommodation', value: paymentsList.filter(p => p.paidFor === 'accommodation').reduce((sum, p) => sum + p.amount, 0), color: '#FF6B6B', icon: '🏠' },
+        { name: 'Food', value: paymentsList.filter(p => p.paidFor === 'food').reduce((sum, p) => sum + p.amount, 0), color: '#4ECDC4', icon: '🍽️' },
+        { name: 'Utilities', value: paymentsList.filter(p => p.paidFor === 'utilities').reduce((sum, p) => sum + p.amount, 0), color: '#FFD166', icon: '💡' },
+        { name: 'Other', value: paymentsList.filter(p => !p.paidFor).reduce((sum, p) => sum + p.amount, 0), color: '#6C5CE7', icon: '📦' },
+      ].filter(c => c.value > 0);
 
       setStats({
         totalSpent,
@@ -281,19 +236,20 @@ const Dashboard = () => {
         resolvedTickets: ticketsList.filter(t => t.status === 'resolved').length,
         totalPayments: paymentsList.length,
         daysRemaining: room ? calculateDaysRemaining(room) : 0,
-        roomNumber: room?.roomNumber || null,
-        blockName: room?.blockName || null,
+        monthlySpending: monthlyData,
+        categoryBreakdown: categories,
+        occupancyRate: 78,
       });
 
     } catch (err) {
       setError('Failed to load dashboard data');
+      console.error('Dashboard error:', err);
     } finally {
       setLoading(false);
     }
   };
 
   const calculateDaysRemaining = (room) => {
-    // Mock calculation - in reality, would use session dates
     return 165;
   };
 
@@ -301,24 +257,26 @@ const Dashboard = () => {
     setActiveTab(newValue);
   };
 
-  const filteredRooms = availableRooms;
+  const toggleFavorite = (roomId) => {
+    setFavorites(prev =>
+      prev.includes(roomId) ? prev.filter(id => id !== roomId) : [...prev, roomId]
+    );
+  };
 
   if (loading) {
     return (
-      <Box className="loading-screen">
-        <Box className="loading-content">
-          <Box className="loading-spinner">
-            <Box className="spinner-ring"></Box>
-            <Box className="spinner-ring"></Box>
-            <Box className="spinner-ring"></Box>
-          </Box>
-          <Typography variant="h5" className="loading-text">
-            Loading your hostel dashboard...
-          </Typography>
-          <Typography variant="body2" className="loading-subtext">
-            Preparing your accommodation overview
-          </Typography>
+      <Box className="loading-container">
+        <Box className="loading-spinner">
+          <Box className="spinner-ring"></Box>
+          <Box className="spinner-ring"></Box>
+          <Box className="spinner-ring"></Box>
         </Box>
+        <Typography variant="h6" className="loading-text">
+          Loading your dashboard
+        </Typography>
+        <Typography variant="body2" className="loading-subtext">
+          Please wait while we prepare your data
+        </Typography>
       </Box>
     );
   }
@@ -328,63 +286,64 @@ const Dashboard = () => {
       {/* Animated Background */}
       <Box className="dashboard-bg">
         <Box className="bg-gradient"></Box>
-        <Box className="bg-particles">
-          {[...Array(30)].map((_, i) => (
-            <Box key={i} className={`particle particle-${i % 5}`} />
-          ))}
-        </Box>
+        <Box className="bg-grid"></Box>
+        <Box className="bg-orb orb-1"></Box>
+        <Box className="bg-orb orb-2"></Box>
+        <Box className="bg-orb orb-3"></Box>
       </Box>
 
       <Container maxWidth="xl" className="dashboard-container">
-        {/* Header Section */}
+        {/* Header Section - Fixed spacing from navbar */}
         <Box className="dashboard-header">
           <Box className="header-left">
             <Box className="welcome-badge">
               <span className="badge-dot"></span>
-              <Typography variant="body2" className="badge-text">
-                STUDENT DASHBOARD
+              <Typography variant="caption" className="badge-text">
+                STUDENT PORTAL
               </Typography>
             </Box>
             <Typography variant="h3" className="welcome-title">
-              Hello, {user?.name || 'Barbara'}!
-              <span className="title-emoji">🏠</span>
+              Welcome back, {user?.name?.split(' ')[0] || 'Chisom'}
+              <span className="welcome-emoji">✨</span>
             </Typography>
             <Typography variant="body1" className="welcome-subtitle">
-              Here's what's happening in your hostel this {timeRange}.
+              Here's what's happening with your accommodation today
             </Typography>
           </Box>
 
           <Box className="header-right">
-            <Box className="time-range-selector">
-              <Button
-                className={`time-btn ${timeRange === 'week' ? 'active' : ''}`}
-                onClick={() => setTimeRange('week')}
-              >
-                Week
-              </Button>
-              <Button
-                className={`time-btn ${timeRange === 'month' ? 'active' : ''}`}
-                onClick={() => setTimeRange('month')}
-              >
-                Month
-              </Button>
-              <Button
-                className={`time-btn ${timeRange === 'semester' ? 'active' : ''}`}
-                onClick={() => setTimeRange('semester')}
-              >
-                Semester
-              </Button>
-            </Box>
+            <Paper className="quick-stats">
+              <Box className="quick-stat-item">
+                <Typography variant="caption" className="stat-label-small">Room</Typography>
+                <Typography variant="h6" className="stat-value-small">
+                  {userRoom ? userRoom.roomNumber : '—'}
+                </Typography>
+              </Box>
+              <Divider orientation="vertical" flexItem className="stat-divider" />
+              <Box className="quick-stat-item">
+                <Typography variant="caption" className="stat-label-small">Block</Typography>
+                <Typography variant="h6" className="stat-value-small">
+                  {userRoom ? userRoom.blockName : '—'}
+                </Typography>
+              </Box>
+              <Divider orientation="vertical" flexItem className="stat-divider" />
+              <Box className="quick-stat-item">
+                <Typography variant="caption" className="stat-label-small">Floor</Typography>
+                <Typography variant="h6" className="stat-value-small">
+                  {userRoom ? userRoom.floorNumber : '—'}
+                </Typography>
+              </Box>
+            </Paper>
 
             <Box className="header-actions">
-              <Tooltip title="Refresh Data">
-                <IconButton className="action-btn">
+              <Tooltip title="Refresh">
+                <IconButton className="action-btn" onClick={fetchDashboardData}>
                   <Refresh />
                 </IconButton>
               </Tooltip>
               <Tooltip title="Notifications">
                 <IconButton className="action-btn">
-                  <Badge badgeContent={stats.pendingTickets} color="error">
+                  <Badge badgeContent={stats.pendingTickets} color="error" className="notification-badge">
                     <Notifications />
                   </Badge>
                 </IconButton>
@@ -396,110 +355,122 @@ const Dashboard = () => {
           </Box>
         </Box>
 
-        {/* Stats Cards Section - Student Specific */}
+        {error && (
+          <Alert severity="error" className="dashboard-alert" onClose={() => setError('')}>
+            {error}
+          </Alert>
+        )}
+
+        {/* Stats Cards - 4 cards per row (1/4 width each) */}
         <Grid container spacing={3} className="stats-grid">
-          <Grid item xs={12} md={4}>
+          {/* Card 1 - Room Status */}
+          <Grid item xs={12} sm={6} md={3}>
             <Zoom in timeout={300}>
-              <Card className="stat-card room-status">
-                <Box className="card-gradient"></Box>
-                <CardContent className="stat-content">
-                  <Box className="stat-icon-wrapper">
-                    <Box className="stat-icon">
-                      <Home />
-                    </Box>
+              <Card className="stat-card">
+                <CardContent>
+                  <Box className="stat-icon-wrapper" sx={{ bgcolor: 'rgba(255, 107, 107, 0.15)' }}>
+                    <Home className="stat-icon" sx={{ color: '#FF6B6B' }} />
                   </Box>
-                  <Box className="stat-info">
-                    <Typography variant="body2" className="stat-label">
-                      Room Status
-                    </Typography>
-                    <Typography variant="h3" className="stat-value">
-                      {userRoom ? 'Allocated' : 'No Room'}
-                    </Typography>
-                    <Box className="stat-trend">
-                      {userRoom ? (
-                        <>
-                          <Box className="trend-indicator up">
-                            <CheckCircle />
-                            <Typography variant="body2">{userRoom.roomNumber}</Typography>
-                          </Box>
-                          <Typography variant="caption" className="trend-period">
-                            {userRoom.blockName}, Floor {userRoom.floorNumber}
-                          </Typography>
-                        </>
-                      ) : (
-                        <Button
-                          size="small"
-                          className="apply-btn"
-                          onClick={() => navigate('/rooms')}
-                        >
-                          Apply Now
-                          <ArrowForward />
-                        </Button>
-                      )}
+                  <Typography variant="body2" className="stat-label">
+                    Room Status
+                  </Typography>
+                  <Typography variant="h4" className="stat-value">
+                    {userRoom ? 'Allocated' : 'Available'}
+                  </Typography>
+                  {userRoom ? (
+                    <Box className="stat-details">
+                      <Chip
+                        label={`${userRoom.roomNumber} · ${userRoom.blockName}`}
+                        size="small"
+                        className="stat-chip"
+                      />
                     </Box>
-                  </Box>
+                  ) : (
+                    <Button
+                      size="small"
+                      className="stat-action-btn"
+                      onClick={() => navigate('/rooms')}
+                    >
+                      Apply Now
+                    </Button>
+                  )}
                 </CardContent>
               </Card>
             </Zoom>
           </Grid>
 
-          <Grid item xs={12} md={4}>
+          {/* Card 2 - Total Spent */}
+          <Grid item xs={12} sm={6} md={3}>
             <Zoom in timeout={400}>
-              <Card className="stat-card total-spent">
-                <Box className="card-gradient"></Box>
-                <CardContent className="stat-content">
-                  <Box className="stat-icon-wrapper">
-                    <Box className="stat-icon">
-                      <AccountBalanceWallet />
-                    </Box>
+              <Card className="stat-card">
+                <CardContent>
+                  <Box className="stat-icon-wrapper" sx={{ bgcolor: 'rgba(78, 205, 196, 0.15)' }}>
+                    <AccountBalanceWallet className="stat-icon" sx={{ color: '#4ECDC4' }} />
                   </Box>
-                  <Box className="stat-info">
-                    <Typography variant="body2" className="stat-label">
-                      Total Spent
-                    </Typography>
-                    <Typography variant="h3" className="stat-value">
-                      ₦{stats.totalSpent.toLocaleString()}
-                    </Typography>
-                    <Box className="stat-trend">
-                      <Box className="trend-indicator up">
-                        <TrendingUp />
-                        <Typography variant="body2">+12.5%</Typography>
-                      </Box>
-                      <Typography variant="caption" className="trend-period">
-                        This semester
-                      </Typography>
-                    </Box>
+                  <Typography variant="body2" className="stat-label">
+                    Total Spent
+                  </Typography>
+                  <Typography variant="h4" className="stat-value">
+                    ₦{stats.totalSpent.toLocaleString() || '0'}
+                  </Typography>
+                  <Box className="stat-details">
+                    <Chip
+                      label={`${stats.totalPayments} transactions`}
+                      size="small"
+                      className="stat-chip"
+                    />
                   </Box>
                 </CardContent>
               </Card>
             </Zoom>
           </Grid>
 
-          <Grid item xs={12} md={4}>
+          {/* Card 3 - Open Tickets */}
+          <Grid item xs={12} sm={6} md={3}>
             <Zoom in timeout={500}>
-              <Card className="stat-card session-progress">
-                <Box className="card-gradient"></Box>
-                <CardContent className="stat-content">
-                  <Box className="stat-icon-wrapper">
-                    <Box className="stat-icon">
-                      <CalendarToday />
-                    </Box>
+              <Card className="stat-card">
+                <CardContent>
+                  <Box className="stat-icon-wrapper" sx={{ bgcolor: 'rgba(255, 209, 102, 0.15)' }}>
+                    <ConfirmationNumber className="stat-icon" sx={{ color: '#FFD166' }} />
                   </Box>
-                  <Box className="stat-info">
-                    <Typography variant="body2" className="stat-label">
-                      Session Progress
-                    </Typography>
-                    <Typography variant="h3" className="stat-value">
-                      {stats.daysRemaining} days
-                    </Typography>
-                    <Box className="stat-trend">
-                      <Box className="trend-indicator">
-                        <AccessTime />
-                        <Typography variant="body2">Remaining</Typography>
-                      </Box>
-                      <Typography variant="caption" className="trend-period">
-                        of 180 days
-                      </Typography>
+                  <Typography variant="body2" className="stat-label">
+                    Open Tickets
+                  </Typography>
+                  <Typography variant="h4" className="stat-value">
+                    {stats.pendingTickets || '0'}
+                  </Typography>
+                  <Box className="stat-details">
+                    <Chip
+                      label={`${stats.resolvedTickets} resolved`}
+                      size="small"
+                      className="stat-chip"
+                    />
+                  </Box>
+                </CardContent>
+              </Card>
+            </Zoom>
+          </Grid>
+
+          {/* Card 4 - Session Ends */}
+          <Grid item xs={12} sm={6} md={3}>
+            <Zoom in timeout={600}>
+              <Card className="stat-card">
+                <CardContent>
+                  <Box className="stat-icon-wrapper" sx={{ bgcolor: 'rgba(108, 92, 231, 0.15)' }}>
+                    <AccessTime className="stat-icon" sx={{ color: '#6C5CE7' }} />
+                  </Box>
+                  <Typography variant="body2" className="stat-label">
+                    Session Ends
+                  </Typography>
+                  <Typography variant="h4" className="stat-value">
+                    {stats.daysRemaining}d
+                  </Typography>
+                  <Box className="stat-details">
+                    <Box className="progress-bar">
+                      <Box
+                        className="progress-fill"
+                        sx={{ width: `${(stats.daysRemaining / 180) * 100}%` }}
+                      />
                     </Box>
                   </Box>
                 </CardContent>
@@ -508,546 +479,402 @@ const Dashboard = () => {
           </Grid>
         </Grid>
 
-        {/* Charts Section - Spending Breakdown */}
-        <Grid container spacing={3} className="charts-section">
+        {/* Charts & Overview Section - 2/3 and 1/3 split */}
+        <Grid container spacing={3} className="overview-grid">
+          {/* Left chart - 2/3 width */}
           <Grid item xs={12} lg={8}>
-            <Grow in timeout={600}>
-              <Card className="chart-card spending-chart">
+            <Fade in timeout={700}>
+              <Card className="chart-card">
                 <CardContent>
                   <Box className="chart-header">
-                    <Box>
-                      <Typography variant="h5" className="chart-title">
-                        Spending Overview
-                      </Typography>
-                      <Typography variant="body2" className="chart-subtitle">
-                        This month vs last month
-                      </Typography>
-                    </Box>
-                    <Box className="chart-actions">
-                      <Button
-                        className={`chart-action-btn ${selectedChart === 'all' ? 'active' : ''}`}
-                        onClick={() => setSelectedChart('all')}
-                      >
-                        All
-                      </Button>
-                      <Button
-                        className={`chart-action-btn ${selectedChart === 'accommodation' ? 'active' : ''}`}
-                        onClick={() => setSelectedChart('accommodation')}
-                      >
-                        Accommodation
-                      </Button>
-                      <Button
-                        className={`chart-action-btn ${selectedChart === 'food' ? 'active' : ''}`}
-                        onClick={() => setSelectedChart('food')}
-                      >
-                        Food
-                      </Button>
+                    <Typography variant="h6" className="chart-title">
+                      Spending Overview
+                    </Typography>
+                    <Box className="chart-legend">
+                      <Box className="legend-item">
+                        <Box className="legend-dot" sx={{ bgcolor: '#FF6B6B' }} />
+                        <Typography variant="caption">Accommodation</Typography>
+                      </Box>
+                      <Box className="legend-item">
+                        <Box className="legend-dot" sx={{ bgcolor: '#4ECDC4' }} />
+                        <Typography variant="caption">Food</Typography>
+                      </Box>
+                      <Box className="legend-item">
+                        <Box className="legend-dot" sx={{ bgcolor: '#FFD166' }} />
+                        <Typography variant="caption">Utilities</Typography>
+                      </Box>
                     </Box>
                   </Box>
                   <Box className="chart-container">
-                    <ResponsiveContainer width="100%" height={350}>
-                      <AreaChart data={spendingData}>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <AreaChart data={stats.monthlySpending.length ? stats.monthlySpending : dummyData}>
                         <defs>
                           <linearGradient id="accommodationGradient" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#6366F1" stopOpacity={0.3} />
-                            <stop offset="95%" stopColor="#6366F1" stopOpacity={0} />
+                            <stop offset="5%" stopColor="#FF6B6B" stopOpacity={0.3} />
+                            <stop offset="95%" stopColor="#FF6B6B" stopOpacity={0} />
                           </linearGradient>
                           <linearGradient id="foodGradient" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.3} />
-                            <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0} />
+                            <stop offset="5%" stopColor="#4ECDC4" stopOpacity={0.3} />
+                            <stop offset="95%" stopColor="#4ECDC4" stopOpacity={0} />
                           </linearGradient>
                           <linearGradient id="utilitiesGradient" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#EC4899" stopOpacity={0.3} />
-                            <stop offset="95%" stopColor="#EC4899" stopOpacity={0} />
+                            <stop offset="5%" stopColor="#FFD166" stopOpacity={0.3} />
+                            <stop offset="95%" stopColor="#FFD166" stopOpacity={0} />
                           </linearGradient>
                         </defs>
                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                        <XAxis
-                          dataKey="month"
-                          stroke="rgba(255,255,255,0.5)"
-                          tick={{ fill: 'rgba(255,255,255,0.7)' }}
-                        />
-                        <YAxis
-                          stroke="rgba(255,255,255,0.5)"
-                          tick={{ fill: 'rgba(255,255,255,0.7)' }}
-                        />
+                        <XAxis dataKey="month" stroke="#888" tick={{ fill: '#888' }} />
+                        <YAxis stroke="#888" tick={{ fill: '#888' }} />
                         <ChartTooltip
                           contentStyle={{
-                            backgroundColor: 'rgba(17, 24, 39, 0.95)',
-                            border: '1px solid rgba(255,255,255,0.1)',
-                            borderRadius: '12px',
-                            backdropFilter: 'blur(10px)',
+                            backgroundColor: '#1A1A1A',
+                            border: '1px solid #333',
+                            borderRadius: '8px',
                           }}
-                          labelStyle={{ color: 'white' }}
+                          labelStyle={{ color: '#FFF' }}
                         />
-                        {selectedChart === 'all' ? (
-                          <>
-                            <Area
-                              type="monotone"
-                              dataKey="accommodation"
-                              stackId="1"
-                              stroke="#6366F1"
-                              strokeWidth={2}
-                              fill="url(#accommodationGradient)"
-                            />
-                            <Area
-                              type="monotone"
-                              dataKey="food"
-                              stackId="1"
-                              stroke="#8B5CF6"
-                              strokeWidth={2}
-                              fill="url(#foodGradient)"
-                            />
-                            <Area
-                              type="monotone"
-                              dataKey="utilities"
-                              stackId="1"
-                              stroke="#EC4899"
-                              strokeWidth={2}
-                              fill="url(#utilitiesGradient)"
-                            />
-                          </>
-                        ) : (
-                          <Area
-                            type="monotone"
-                            dataKey={selectedChart}
-                            stroke={selectedChart === 'accommodation' ? '#6366F1' : selectedChart === 'food' ? '#8B5CF6' : '#EC4899'}
-                            strokeWidth={3}
-                            fill={`url(#${selectedChart}Gradient)`}
-                          />
-                        )}
+                        <Area
+                          type="monotone"
+                          dataKey="accommodation"
+                          stackId="1"
+                          stroke="#FF6B6B"
+                          strokeWidth={2}
+                          fill="url(#accommodationGradient)"
+                        />
+                        <Area
+                          type="monotone"
+                          dataKey="food"
+                          stackId="1"
+                          stroke="#4ECDC4"
+                          strokeWidth={2}
+                          fill="url(#foodGradient)"
+                        />
+                        <Area
+                          type="monotone"
+                          dataKey="utilities"
+                          stackId="1"
+                          stroke="#FFD166"
+                          strokeWidth={2}
+                          fill="url(#utilitiesGradient)"
+                        />
                       </AreaChart>
                     </ResponsiveContainer>
                   </Box>
                 </CardContent>
               </Card>
-            </Grow>
+            </Fade>
           </Grid>
 
+          {/* Right mini stats - 1/3 width */}
           <Grid item xs={12} lg={4}>
-            <Grow in timeout={700}>
-              <Card className="chart-card category-chart">
+            <Fade in timeout={800}>
+              <Card className="stats-mini-card">
                 <CardContent>
-                  <Typography variant="h5" className="chart-title">
-                    Expense Breakdown
+                  <Typography variant="h6" className="card-title" gutterBottom>
+                    Quick Overview
                   </Typography>
-                  <Typography variant="body2" className="chart-subtitle">
-                    This month vs last month
-                  </Typography>
-                  <Box className="category-list">
-                    {categoryData.map((item, index) => (
-                      <Fade in timeout={800 + index * 100} key={item.name}>
-                        <Box className="category-item">
-                          <Box className="category-info">
-                            <Box className="category-icon" sx={{ bgcolor: `${item.color}20` }}>
-                              <span>{item.icon}</span>
-                            </Box>
-                            <Box className="category-details">
-                              <Typography variant="body2" className="category-name">
-                                {item.name}
-                              </Typography>
-                              <Box className="category-progress">
-                                <Box
-                                  className="progress-bar"
-                                  sx={{
-                                    width: `${(item.value / 50000) * 100}%`,
-                                    bgcolor: item.color,
-                                  }}
-                                />
-                              </Box>
-                            </Box>
-                          </Box>
-                          <Box className="category-value-section">
-                            <Typography variant="h6" className="category-value">
-                              ₦{item.value.toLocaleString()}
-                            </Typography>
-                            <Typography variant="caption" className={`category-change ${item.change.includes('+') ? 'up' : 'down'}`}>
-                              {item.change}
-                            </Typography>
-                          </Box>
-                        </Box>
-                      </Fade>
-                    ))}
+                  
+                  <Box className="mini-stat-item">
+                    <Box className="mini-stat-icon" sx={{ bgcolor: 'rgba(255, 107, 107, 0.15)' }}>
+                      <MeetingRoom sx={{ color: '#FF6B6B', fontSize: 20 }} />
+                    </Box>
+                    <Box className="mini-stat-content">
+                      <Typography variant="body2" className="mini-stat-label">
+                        Occupancy Rate
+                      </Typography>
+                      <Typography variant="h5" className="mini-stat-value">
+                        {stats.occupancyRate}%
+                      </Typography>
+                    </Box>
                   </Box>
-                </CardContent>
-              </Card>
-            </Grow>
-          </Grid>
-        </Grid>
 
-        {/* Quick Actions & Stats Section */}
-        <Grid container spacing={3} className="quick-actions-section">
-          <Grid item xs={12} md={6}>
-            <Slide direction="right" in timeout={800}>
-              <Card className="quick-actions-card">
-                <CardContent>
-                  <Typography variant="h5" className="quick-actions-title">
-                    Quick Actions
-                  </Typography>
-                  <Grid container spacing={2} className="quick-actions-grid">
-                    <Grid item xs={6} sm={3}>
-                      <Button
-                        className="quick-action-btn"
-                        onClick={() => navigate('/rooms')}
-                      >
-                        <Box className="quick-action-icon">
-                          <MeetingRoom />
-                        </Box>
-                        <Typography variant="body2">Browse Rooms</Typography>
-                      </Button>
-                    </Grid>
-                    <Grid item xs={6} sm={3}>
-                      <Button
-                        className="quick-action-btn"
-                        onClick={() => navigate('/payments')}
-                      >
-                        <Box className="quick-action-icon">
-                          <Payment />
-                        </Box>
-                        <Typography variant="body2">Make Payment</Typography>
-                      </Button>
-                    </Grid>
-                    <Grid item xs={6} sm={3}>
-                      <Button
-                        className="quick-action-btn"
-                        onClick={() => navigate('/complaints')}
-                      >
-                        <Box className="quick-action-icon">
-                          <Report />
-                        </Box>
-                        <Typography variant="body2">Report Issue</Typography>
-                      </Button>
-                    </Grid>
-                    <Grid item xs={6} sm={3}>
-                      <Button
-                        className="quick-action-btn"
-                        onClick={() => navigate('/profile')}
-                      >
-                        <Box className="quick-action-icon">
-                          <Person />
-                        </Box>
-                        <Typography variant="body2">My Profile</Typography>
-                      </Button>
-                    </Grid>
-                  </Grid>
-
-                  <Box className="roommate-section">
-                    <Typography variant="subtitle1" className="roommate-title">
-                      Roommates
-                    </Typography>
-                    <AvatarGroup max={4} className="roommate-avatars">
-                      <Avatar src="https://i.pravatar.cc/150?img=1" />
-                      <Avatar src="https://i.pravatar.cc/150?img=2" />
-                      <Avatar src="https://i.pravatar.cc/150?img=3" />
-                      <Avatar src="https://i.pravatar.cc/150?img=4" />
-                      <Avatar src="https://i.pravatar.cc/150?img=5" />
-                    </AvatarGroup>
+                  <Box className="mini-stat-item">
+                    <Box className="mini-stat-icon" sx={{ bgcolor: 'rgba(78, 205, 196, 0.15)' }}>
+                      <Group sx={{ color: '#4ECDC4', fontSize: 20 }} />
+                    </Box>
+                    <Box className="mini-stat-content">
+                      <Typography variant="body2" className="mini-stat-label">
+                        Roommates
+                      </Typography>
+                      <Typography variant="h5" className="mini-stat-value">
+                        {roommates.length}
+                      </Typography>
+                    </Box>
                   </Box>
-                </CardContent>
-              </Card>
-            </Slide>
-          </Grid>
 
-          <Grid item xs={12} md={6}>
-            <Slide direction="left" in timeout={900}>
-              <Card className="hostel-stats-card">
-                <CardContent>
-                  <Typography variant="h5" className="hostel-stats-title">
-                    Hostel Overview
-                  </Typography>
-                  <Grid container spacing={2} className="hostel-stats-grid">
-                    {roomStatsData.map((item, index) => (
-                      <Grid item xs={6} key={item.status}>
-                        <Fade in timeout={1000 + index * 100}>
-                          <Box className="hostel-stat-item">
-                            <Box className="hostel-stat-header">
-                              <Box
-                                className="hostel-stat-dot"
-                                sx={{ bgcolor: item.color }}
-                              />
-                              <Typography variant="body2" className="hostel-stat-label">
-                                {item.status}
-                              </Typography>
-                            </Box>
-                            <Box className="hostel-stat-value">
-                              <Typography variant="h4" className="stat-main">
-                                {item.count}
-                              </Typography>
-                              <Box className={`stat-change ${item.trend}`}>
-                                {item.trend === 'up' ? <TrendingUp /> : <TrendingDown />}
-                                <Typography variant="caption">{item.change}</Typography>
-                              </Box>
-                            </Box>
-                          </Box>
-                        </Fade>
-                      </Grid>
-                    ))}
-                  </Grid>
-                </CardContent>
-              </Card>
-            </Slide>
-          </Grid>
-        </Grid>
+                  <Box className="mini-stat-item">
+                    <Box className="mini-stat-icon" sx={{ bgcolor: 'rgba(255, 209, 102, 0.15)' }}>
+                      <Payment sx={{ color: '#FFD166', fontSize: 20 }} />
+                    </Box>
+                    <Box className="mini-stat-content">
+                      <Typography variant="body2" className="mini-stat-label">
+                        Next Payment
+                      </Typography>
+                      <Typography variant="h5" className="mini-stat-value">
+                        {payments.length > 0 ? '₦' + payments[0]?.amount?.toLocaleString() : '—'}
+                      </Typography>
+                    </Box>
+                  </Box>
 
-        {/* Tabs for Recent Activity */}
-        <Box className="tabs-section">
-          <Paper className="tabs-container">
-            <Tabs
-              value={activeTab}
-              onChange={handleTabChange}
-              className="dashboard-tabs"
-              variant="fullWidth"
-            >
-              <Tab icon={<Receipt />} label="Recent Bookings" />
-              <Tab icon={<Report />} label="Maintenance Requests" />
-              <Tab icon={<Payment />} label="Payment History" />
-            </Tabs>
-          </Paper>
+                  <Divider sx={{ my: 2, borderColor: '#333' }} />
 
-          {/* Recent Bookings Tab */}
-          {activeTab === 0 && (
-            <Fade in>
-              <Card className="recent-list-card">
-                <CardContent>
-                  <Box className="list-header">
-                    <Typography variant="h6">Recent Bookings</Typography>
-                    <Button className="view-all-btn" onClick={() => navigate('/bookings')}>
-                      View All <ArrowForward />
+                  <Box className="quick-actions">
+                    <Button
+                      fullWidth
+                      variant="outlined"
+                      className="quick-action-button"
+                      onClick={() => navigate('/payments')}
+                      startIcon={<Payment />}
+                    >
+                      Make Payment
                     </Button>
-                  </Box>
-                  <Box className="table-container">
-                    <table className="recent-table">
-                      <thead>
-                        <tr>
-                          <th>Booking ID</th>
-                          <th>Student</th>
-                          <th>Room</th>
-                          <th>Amount</th>
-                          <th>Status</th>
-                          <th>Check In</th>
-                          <th>Check Out</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {recentBookings.map((booking, index) => (
-                          <Fade in timeout={1200 + index * 100} key={booking.id}>
-                            <tr className="table-row">
-                              <td>
-                                <Typography variant="body2" className="booking-id">
-                                  {booking.id}
-                                </Typography>
-                              </td>
-                              <td>
-                                <Box className="customer-info">
-                                  <Avatar className="customer-avatar">
-                                    {booking.student.charAt(0)}
-                                  </Avatar>
-                                  <Typography variant="body2">
-                                    {booking.student}
-                                  </Typography>
-                                </Box>
-                              </td>
-                              <td>
-                                <Typography variant="body2" className="room-number">
-                                  {booking.room}
-                                </Typography>
-                              </td>
-                              <td>
-                                <Typography variant="body2" className="booking-amount">
-                                  ₦{booking.amount.toLocaleString()}
-                                </Typography>
-                              </td>
-                              <td>
-                                <Chip
-                                  label={booking.status}
-                                  size="small"
-                                  className={`booking-status ${booking.status}`}
-                                />
-                              </td>
-                              <td>
-                                <Typography variant="body2" className="booking-date">
-                                  {booking.checkIn}
-                                </Typography>
-                              </td>
-                              <td>
-                                <Typography variant="body2" className="booking-date">
-                                  {booking.checkOut}
-                                </Typography>
-                              </td>
-                            </tr>
-                          </Fade>
-                        ))}
-                      </tbody>
-                    </table>
+                    <Button
+                      fullWidth
+                      variant="outlined"
+                      className="quick-action-button"
+                      onClick={() => navigate('/complaints/new')}
+                      startIcon={<Report />}
+                    >
+                      Report Issue
+                    </Button>
                   </Box>
                 </CardContent>
               </Card>
             </Fade>
-          )}
+          </Grid>
+        </Grid>
 
-          {/* Maintenance Requests Tab */}
-          {activeTab === 1 && (
+        {/* Tabs Section - Full width */}
+        <Box className="tabs-section">
+          <Paper className="tabs-header">
+            <Tabs value={activeTab} onChange={handleTabChange} className="tabs">
+              <Tab icon={<MeetingRoom />} label="Available Rooms" />
+              <Tab icon={<Receipt />} label="Payment History" />
+              <Tab icon={<Report />} label="Support Tickets" />
+            </Tabs>
+          </Paper>
+
+          {/* Available Rooms Tab - 3 cards per row */}
+          {activeTab === 0 && (
             <Fade in>
-              <Card className="recent-list-card">
+              <Card className="content-card">
                 <CardContent>
-                  <Box className="list-header">
-                    <Typography variant="h6">Maintenance Requests</Typography>
-                    <Button className="view-all-btn" onClick={() => navigate('/complaints')}>
-                      View All <ArrowForward />
-                    </Button>
+                  <Box className="content-header">
+                    <Typography variant="h6">Available Rooms</Typography>
+                    <Box className="content-actions">
+                      <TextField
+                        placeholder="Search rooms..."
+                        size="small"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        InputProps={{
+                          startAdornment: (
+                            <InputAdornment position="start">
+                              <Search sx={{ color: '#888' }} />
+                            </InputAdornment>
+                          ),
+                        }}
+                        className="search-field"
+                      />
+                      <Button
+                        className="view-all-link"
+                        onClick={() => navigate('/rooms')}
+                      >
+                        View All <ArrowForward />
+                      </Button>
+                    </Box>
                   </Box>
-                  <Box className="table-container">
-                    <table className="recent-table">
-                      <thead>
-                        <tr>
-                          <th>Request ID</th>
-                          <th>Student</th>
-                          <th>Room</th>
-                          <th>Issue</th>
-                          <th>Priority</th>
-                          <th>Status</th>
-                          <th>Date</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {maintenanceRequests.map((request, index) => (
-                          <Fade in timeout={1200 + index * 100} key={request.id}>
-                            <tr className="table-row">
-                              <td>
-                                <Typography variant="body2" className="request-id">
-                                  {request.id}
-                                </Typography>
-                              </td>
-                              <td>
-                                <Box className="customer-info">
-                                  <Avatar className="customer-avatar">
-                                    {request.student.charAt(0)}
-                                  </Avatar>
-                                  <Typography variant="body2">
-                                    {request.student}
+
+                  {availableRooms.length === 0 ? (
+                    <Box className="empty-state">
+                      <Typography variant="body1" color="textSecondary">
+                        No rooms available at the moment
+                      </Typography>
+                    </Box>
+                  ) : (
+                    <Grid container spacing={2}>
+                      {availableRooms.map((room, index) => (
+                        <Grid item xs={12} sm={6} md={4} key={room._id}>
+                          <Fade in timeout={900 + index * 100}>
+                            <Box className="room-card">
+                              <Box className="room-image">
+                                <img
+                                  src={room.images?.[0] || 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af'}
+                                  alt={room.roomNumber}
+                                />
+                                <IconButton
+                                  className="favorite-btn"
+                                  onClick={() => toggleFavorite(room._id)}
+                                  size="small"
+                                >
+                                  {favorites.includes(room._id) ? (
+                                    <Favorite sx={{ color: '#FF6B6B' }} />
+                                  ) : (
+                                    <FavoriteBorder />
+                                  )}
+                                </IconButton>
+                                <Chip
+                                  label="Available"
+                                  size="small"
+                                  className="room-status"
+                                />
+                              </Box>
+                              <Box className="room-info">
+                                <Box className="room-header">
+                                  <Typography variant="subtitle1" className="room-number">
+                                    {room.roomNumber}
+                                  </Typography>
+                                  <Typography variant="subtitle1" className="room-price">
+                                    ₦{room.price.toLocaleString()}
                                   </Typography>
                                 </Box>
-                              </td>
-                              <td>
-                                <Typography variant="body2" className="room-number">
-                                  {request.room}
+                                <Typography variant="caption" className="room-location">
+                                  <LocationOn sx={{ fontSize: 14 }} />
+                                  {room.blockName}, Floor {room.floorNumber}
                                 </Typography>
-                              </td>
-                              <td>
-                                <Typography variant="body2">
-                                  {request.issue}
-                                </Typography>
-                              </td>
-                              <td>
-                                <Chip
-                                  label={request.priority}
-                                  size="small"
-                                  className={`priority-${request.priority}`}
-                                />
-                              </td>
-                              <td>
-                                <Chip
-                                  label={request.status}
-                                  size="small"
-                                  className={`request-status ${request.status}`}
-                                />
-                              </td>
-                              <td>
-                                <Typography variant="body2" className="request-date">
-                                  {request.date}
-                                </Typography>
-                              </td>
-                            </tr>
+                                <Box className="room-amenities">
+                                  {room.amenities?.slice(0, 3).map(amenity => (
+                                    <Chip
+                                      key={amenity}
+                                      label={amenity}
+                                      size="small"
+                                      className="amenity-chip"
+                                    />
+                                  ))}
+                                </Box>
+                                <Button
+                                  fullWidth
+                                  variant="outlined"
+                                  className="view-room-btn"
+                                  onClick={() => navigate(`/rooms/${room._id}`)}
+                                >
+                                  View Details
+                                </Button>
+                              </Box>
+                            </Box>
                           </Fade>
-                        ))}
-                      </tbody>
-                    </table>
-                  </Box>
+                        </Grid>
+                      ))}
+                    </Grid>
+                  )}
                 </CardContent>
               </Card>
             </Fade>
           )}
 
           {/* Payment History Tab */}
-          {activeTab === 2 && (
+          {activeTab === 1 && (
             <Fade in>
-              <Card className="recent-list-card">
+              <Card className="content-card">
                 <CardContent>
-                  <Box className="list-header">
-                    <Typography variant="h6">Payment History</Typography>
-                    <Button className="view-all-btn" onClick={() => navigate('/payments')}>
+                  <Box className="content-header">
+                    <Typography variant="h6">Recent Payments</Typography>
+                    <Button
+                      className="view-all-link"
+                      onClick={() => navigate('/payments')}
+                    >
                       View All <ArrowForward />
                     </Button>
                   </Box>
+
                   {payments.length === 0 ? (
                     <Box className="empty-state">
-                      <img
-                        src="https://illustrations.popsy.co/amber/payment.svg"
-                        alt="No payments"
-                        className="empty-image"
-                      />
-                      <Typography variant="h6" className="empty-title">
-                        No payments yet
+                      <Typography variant="body1" color="textSecondary">
+                        No payment history yet
                       </Typography>
-                      <Typography variant="body2" className="empty-text">
-                        Make your first payment to get started
-                      </Typography>
-                      <Button
-                        variant="contained"
-                        className="empty-button"
-                        onClick={() => navigate('/rooms')}
-                      >
-                        Browse Rooms
-                      </Button>
                     </Box>
                   ) : (
-                    <Box className="table-container">
-                      <table className="recent-table">
-                        <thead>
-                          <tr>
-                            <th>Reference</th>
-                            <th>Amount</th>
-                            <th>Status</th>
-                            <th>Date</th>
-                            <th>Method</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {payments.slice(0, 5).map((payment, index) => (
-                            <Fade in timeout={1200 + index * 100} key={payment._id}>
-                              <tr className="table-row">
-                                <td>
-                                  <Typography variant="body2" className="payment-ref">
-                                    {payment.reference?.slice(0, 10)}...
-                                  </Typography>
-                                </td>
-                                <td>
-                                  <Typography variant="body2" className="payment-amount">
-                                    ₦{payment.amount?.toLocaleString()}
-                                  </Typography>
-                                </td>
-                                <td>
-                                  <Chip
-                                    label={payment.status}
-                                    size="small"
-                                    className={`payment-status ${payment.status}`}
-                                  />
-                                </td>
-                                <td>
-                                  <Typography variant="body2" className="payment-date">
-                                    {new Date(payment.createdAt).toLocaleDateString()}
-                                  </Typography>
-                                </td>
-                                <td>
-                                  <Typography variant="body2" className="payment-method">
-                                    {payment.paymentMethod || 'Card'}
-                                  </Typography>
-                                </td>
-                              </tr>
-                            </Fade>
-                          ))}
-                        </tbody>
-                      </table>
+                    <Box className="payment-list">
+                      {payments.slice(0, 5).map((payment, index) => (
+                        <Fade in timeout={900 + index * 100} key={payment._id}>
+                          <Box className="payment-item">
+                            <Box className="payment-info">
+                              <Box>
+                                <Typography variant="subtitle2" className="payment-amount">
+                                  ₦{payment.amount.toLocaleString()}
+                                </Typography>
+                                <Typography variant="caption" className="payment-ref">
+                                  Ref: {payment.reference?.slice(0, 12)}...
+                                </Typography>
+                              </Box>
+                              <Typography variant="caption" className="payment-date">
+                                {new Date(payment.createdAt).toLocaleDateString()}
+                              </Typography>
+                            </Box>
+                            <Box className="payment-right">
+                              <Chip
+                                label={payment.status}
+                                size="small"
+                                className={`payment-status ${payment.status}`}
+                              />
+                              <IconButton size="small" className="payment-menu">
+                                <MoreVert sx={{ fontSize: 16 }} />
+                              </IconButton>
+                            </Box>
+                          </Box>
+                        </Fade>
+                      ))}
+                    </Box>
+                  )}
+                </CardContent>
+              </Card>
+            </Fade>
+          )}
+
+          {/* Support Tickets Tab */}
+          {activeTab === 2 && (
+            <Fade in>
+              <Card className="content-card">
+                <CardContent>
+                  <Box className="content-header">
+                    <Typography variant="h6">Recent Tickets</Typography>
+                    <Button
+                      className="view-all-link"
+                      onClick={() => navigate('/complaints')}
+                    >
+                      View All <ArrowForward />
+                    </Button>
+                  </Box>
+
+                  {tickets.length === 0 ? (
+                    <Box className="empty-state">
+                      <Typography variant="body1" color="textSecondary">
+                        No tickets yet
+                      </Typography>
+                    </Box>
+                  ) : (
+                    <Box className="ticket-list">
+                      {tickets.slice(0, 5).map((ticket, index) => (
+                        <Fade in timeout={900 + index * 100} key={ticket._id}>
+                          <Box className="ticket-item">
+                            <Box className="ticket-info">
+                              <Box className="ticket-header">
+                                <Typography variant="subtitle2" className="ticket-title">
+                                  {ticket.title}
+                                </Typography>
+                                <Chip
+                                  label={ticket.priority}
+                                  size="small"
+                                  className={`ticket-priority ${ticket.priority}`}
+                                />
+                              </Box>
+                              <Typography variant="caption" className="ticket-category">
+                                {ticket.category}
+                              </Typography>
+                            </Box>
+                            <Box className="ticket-right">
+                              <Chip
+                                label={ticket.status}
+                                size="small"
+                                className={`ticket-status ${ticket.status}`}
+                              />
+                              <Typography variant="caption" className="ticket-date">
+                                {new Date(ticket.createdAt).toLocaleDateString()}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </Fade>
+                      ))}
                     </Box>
                   )}
                 </CardContent>
@@ -1059,5 +886,15 @@ const Dashboard = () => {
     </Box>
   );
 };
+
+// Dummy data for charts
+const dummyData = [
+  { month: 'Oct', accommodation: 0, food: 0, utilities: 0 },
+  { month: 'Nov', accommodation: 0, food: 0, utilities: 0 },
+  { month: 'Dec', accommodation: 0, food: 0, utilities: 0 },
+  { month: 'Jan', accommodation: 0, food: 0, utilities: 0 },
+  { month: 'Feb', accommodation: 0, food: 0, utilities: 0 },
+  { month: 'Mar', accommodation: 0, food: 0, utilities: 0 },
+];
 
 export default Dashboard;

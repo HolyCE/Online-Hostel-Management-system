@@ -124,7 +124,7 @@ const HomePage = () => {
               Join progressive institutions that have already upgraded their students' living experience.
             </p>
             <button
-              className="hero-btn hero-btn-primary"
+              className="heros-btn heros-btn-primary"
               onClick={() => navigate('/register')}
             >
               Get Started for Free

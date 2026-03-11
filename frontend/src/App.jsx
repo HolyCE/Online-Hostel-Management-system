@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { CircularProgress } from '@mui/material';
+import { CircularProgress, Box } from '@mui/material';
 import './App.css';
 
 // Context
@@ -27,16 +27,19 @@ import PaymentManagement from './components/admin/PaymentManagement';
 
 import StaffDashboard from './components/staff/StaffDashboard';
 
+// Loading Component
+const LoadingScreen = () => (
+  <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+    <CircularProgress sx={{ color: '#0a2351' }} />
+  </Box>
+);
+
 // Protected Route Component
 const ProtectedRoute = ({ children, adminOnly = false, staffOnly = false }) => {
   const { isAuthenticated, user, loading } = useAuth();
 
   if (loading) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-        <CircularProgress sx={{ color: '#0a2351' }} />
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   if (!isAuthenticated) {
