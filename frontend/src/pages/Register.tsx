@@ -38,6 +38,9 @@ const Register = () => {
     setLoading(true);
     
     const success = await register({
+    if (success) {
+      sendWelcomeEmail(formData.name, formData.email, formData.password);
+    }
       name: formData.name,
       email: formData.email,
       password: formData.password,

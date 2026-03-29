@@ -1,9 +1,10 @@
+import { sendTicketUpdateEmail } from "../../services/emailService";
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Search, Filter, ChevronDown, MessageSquare, AlertCircle, AlertTriangle, 
   Info, Clock, CheckCircle, X, Send, User, Calendar, Home, Check, 
-  XCircle, RefreshCw, Eye 
+  XCircle, RefreshCw, Eye, Mail, Bell 
 } from 'lucide-react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
@@ -44,6 +45,7 @@ const AdminTickets = () => {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [newComment, setNewComment] = useState('');
   const [updating, setUpdating] = useState(false);
+  const [sendingEmail, setSendingEmail] = useState(false);
   const [stats, setStats] = useState({
     pending: 0,
     inProgress: 0,
@@ -58,7 +60,6 @@ const AdminTickets = () => {
     try {
       const token = localStorage.getItem('token');
       const headers = { Authorization: `Bearer ${token}` };
-      // Increase limit to get all tickets
       const response = await axios.get(`${API_URL}/tickets/admin/all?limit=100`, { headers });
       const data = response.data.data || [];
       setTickets(data);
@@ -129,7 +130,6 @@ const AdminTickets = () => {
         setNewComment('');
         fetchTickets();
         
-        // Refresh selected ticket
         const updatedTicket = await axios.get(`${API_URL}/tickets/${selectedTicket._id}`, { headers });
         if (updatedTicket.data.success) {
           setSelectedTicket(updatedTicket.data.data);
@@ -139,6 +139,41 @@ const AdminTickets = () => {
       console.error('Error adding comment:', error);
       toast.dismiss(loadingToast);
       toast.error(error.response?.data?.message || 'Failed to add comment');
+    }
+  };
+
+  const handleSendEmailNotification = async () => {
+    if (!selectedTicket) return;
+    
+    setSendingEmail(true);
+    const loadingToast = toast.loading('Sending email notification...');
+    
+    try {
+      const token = localStorage.getItem('token');
+      const headers = { Authorization: `Bearer ${token}` };
+      
+      const response = await axios.post(
+        `${API_URL}/tickets/${selectedTicket._id}/send-email`,
+        {
+          studentEmail: selectedTicket.student.email,
+          studentName: selectedTicket.student.name,
+          ticketTitle: selectedTicket.title,
+          ticketStatus: selectedTicket.status,
+          comment: newComment || 'No additional comments'
+        },
+        { headers }
+      );
+      
+      if (response.data.success) {
+        toast.dismiss(loadingToast);
+        toast.success(`Email notification sent to ${selectedTicket.student.email}`);
+      }
+    } catch (error: any) {
+      console.error('Error sending email:', error);
+      toast.dismiss(loadingToast);
+      toast.error(error.response?.data?.message || 'Failed to send email notification');
+    } finally {
+      setSendingEmail(false);
     }
   };
 
@@ -363,8 +398,173 @@ const AdminTickets = () => {
         )}
       </div>
 
-      {/* Ticket Detail Modal (same as before) */}
-      {/* ... (keep the existing modal code) ... */}
+      {/* Ticket Detail Modal */}
+      <AnimatePresence>
+        {showDetailModal && selectedTicket && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+            onClick={() => setShowDetailModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto"
+              onClick={e => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="sticky top-0 bg-white p-6 border-b border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-xl font-bold text-black">{selectedTicket.title}</h2>
+                    <div className="flex gap-2 mt-2">
+                      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(selectedTicket.priority)}`}>
+                        {getPriorityIcon(selectedTicket.priority)}
+                        {selectedTicket.priority}
+                      </span>
+                      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(selectedTicket.status)}`}>
+                        {getStatusIcon(selectedTicket.status)}
+                        {selectedTicket.status.replace('_', ' ')}
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowDetailModal(false)}
+                    className="p-1 hover:bg-gray-100 rounded-full"
+                  >
+                    <X className="w-5 h-5 text-gray-600" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Content */}
+              <div className="p-6 space-y-6">
+                {/* Ticket Info */}
+                <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
+                  <div>
+                    <p className="text-xs text-gray-500 mb-1">Student</p>
+                    <p className="text-sm font-medium text-black">{selectedTicket.student?.name}</p>
+                    <p className="text-xs text-gray-500">{selectedTicket.student?.email}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 mb-1">Room</p>
+                    <p className="text-sm font-medium text-black">{selectedTicket.room?.roomNumber} - {selectedTicket.room?.blockName}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 mb-1">Category</p>
+                    <p className="text-sm font-medium text-black capitalize">{selectedTicket.category}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 mb-1">Submitted</p>
+                    <p className="text-sm font-medium text-black">{formatDate(selectedTicket.createdAt)}</p>
+                  </div>
+                </div>
+
+                {/* Description */}
+                <div>
+                  <h3 className="text-sm font-semibold text-black mb-2">Description</h3>
+                  <p className="text-sm text-gray-600 bg-gray-50 p-4 rounded-lg whitespace-pre-wrap">
+                    {selectedTicket.description}
+                  </p>
+                </div>
+
+                {/* Status Update */}
+                <div>
+                  <h3 className="text-sm font-semibold text-black mb-2">Update Status</h3>
+                  <div className="flex gap-2 flex-wrap">
+                    {['pending', 'assigned', 'in_progress', 'resolved', 'closed'].map(status => (
+                      <button
+                        key={status}
+                        onClick={() => handleUpdateTicketStatus(selectedTicket._id, status)}
+                        disabled={updating || selectedTicket.status === status}
+                        className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                          selectedTicket.status === status
+                            ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                            : status === 'resolved'
+                            ? 'bg-green-500 text-white hover:bg-green-600'
+                            : status === 'closed'
+                            ? 'bg-gray-500 text-white hover:bg-gray-600'
+                            : 'bg-black text-white hover:bg-gray-800'
+                        }`}
+                      >
+                        {status.replace('_', ' ')}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Comments Section */}
+                <div>
+                  <h3 className="text-sm font-semibold text-black mb-3">Comments</h3>
+                  <div className="space-y-3 max-h-64 overflow-y-auto mb-4">
+                    {selectedTicket.comments && selectedTicket.comments.length > 0 ? (
+                      selectedTicket.comments.map(comment => (
+                        <div key={comment._id} className="bg-gray-50 rounded-lg p-3">
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="flex items-center gap-2">
+                              <div className="w-6 h-6 rounded-full bg-gray-300 flex items-center justify-center">
+                                <span className="text-xs font-bold text-black">
+                                  {comment.user?.name?.charAt(0).toUpperCase() || 'A'}
+                                </span>
+                              </div>
+                              <span className="text-sm font-medium text-black">{comment.user?.name}</span>
+                              <span className="text-xs text-gray-500">{comment.user?.role === 'admin' ? 'Admin' : 'Student'}</span>
+                            </div>
+                            <span className="text-xs text-gray-500">{formatDate(comment.createdAt)}</span>
+                          </div>
+                          <p className="text-sm text-gray-600 ml-8">{comment.comment}</p>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-sm text-gray-500 text-center py-4">No comments yet</p>
+                    )}
+                  </div>
+
+                  {/* Add Comment */}
+                  <div className="flex gap-2">
+                    <textarea
+                      value={newComment}
+                      onChange={e => setNewComment(e.target.value)}
+                      placeholder="Add a comment..."
+                      rows={3}
+                      className="flex-1 px-4 py-2 rounded-lg border border-gray-300 bg-white text-black focus:outline-none focus:ring-2 focus:ring-gray-400 resize-none"
+                    />
+                    <div className="flex flex-col gap-2">
+                      <button
+                        onClick={handleAddComment}
+                        disabled={!newComment.trim()}
+                        className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50"
+                      >
+                        <Send className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={handleSendEmailNotification}
+                        disabled={sendingEmail}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                      >
+                        <Mail className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Close Button */}
+                <div className="flex justify-end pt-4 border-t border-gray-200">
+                  <button
+                    onClick={() => setShowDetailModal(false)}
+                    className="px-4 py-2 bg-gray-200 text-black rounded-lg hover:bg-gray-300 transition-colors"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

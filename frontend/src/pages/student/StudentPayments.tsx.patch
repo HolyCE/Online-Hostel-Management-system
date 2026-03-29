@@ -1,0 +1,18 @@
+Add to handlePaymentSuccess function:
+  const handlePaymentSuccess = async () => {
+    toast.success('🎉 Payment successful! Your room has been allocated. Check your dashboard!');
+    
+    // Send email confirmation
+    if (user && selectedRoom) {
+      await sendPaymentConfirmationEmail(
+        user.name,
+        user.email,
+        selectedRoom.price,
+        `PAY-${Date.now()}`
+      );
+    }
+    
+    setShowPaymentForm(false);
+    setSelectedRoom(null);
+    fetchPayments();
+  };
