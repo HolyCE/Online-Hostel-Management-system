@@ -1,38 +1,26 @@
 const express = require('express');
 const router = express.Router();
 
-// Import route modules
+// Import route files
 const authRoutes = require('./authRoutes');
+const userRoutes = require('./userRoutes');
 const roomRoutes = require('./roomRoutes');
+const hallRoutes = require('./hallRoutes');
 const paymentRoutes = require('./paymentRoutes');
 const ticketRoutes = require('./ticketRoutes');
-const userRoutes = require('./userRoutes');
 const adminRoutes = require('./adminRoutes');
+const notificationRoutes = require('./notificationRoutes');
+const settingsRoutes = require('./settingsRoutes');
 
-// Use routes
+// Register routes
 router.use('/auth', authRoutes);
+router.use('/users', userRoutes);
 router.use('/rooms', roomRoutes);
+router.use('/halls', hallRoutes);
 router.use('/payments', paymentRoutes);
 router.use('/tickets', ticketRoutes);
-router.use('/users', userRoutes);
 router.use('/admin', adminRoutes);
-
-// API info route
-router.get('/', (req, res) => {
-  res.json({
-    name: 'Hostel Management API',
-    version: '1.0.0',
-    description: 'API for managing hostel operations',
-    endpoints: {
-      auth: '/api/auth',
-      rooms: '/api/rooms',
-      payments: '/api/payments',
-      tickets: '/api/tickets',
-      users: '/api/users',
-      admin: '/api/admin'
-    },
-    documentation: 'https://github.com/yourusername/hostel-management-backend'
-  });
-});
+router.use('/notifications', notificationRoutes);
+router.use('/admin/settings', settingsRoutes);
 
 module.exports = router;

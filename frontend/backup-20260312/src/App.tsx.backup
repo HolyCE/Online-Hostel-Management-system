@@ -1,0 +1,80 @@
+import React from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider, useAuth } from "./context/AuthContext";
+import { ThemeProvider } from "./context/ThemeContext";
+import { SidebarProvider } from "./context/SidebarContext";
+import AppSidebar from "./components/layout/AppSidebar";
+import Header from "./components/layout/Header";
+import StudentDashboard from "./pages/dashboard/StudentDashboard";
+import AdminDashboard from "./pages/dashboard/AdminDashboard";
+import Login from "./pages/Login";
+import "./App.css";
+
+const ProtectedRoute = ({ children, requiredRole }: { children: React.ReactNode; requiredRole?: "student" | "admin" }) => {
+  const { isAuthenticated, user, loading } = useAuth();
+
+  if (loading) {
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" />;
+  }
+
+  if (requiredRole && user?.role !== requiredRole) {
+    return <Navigate to={user?.role === "admin" ? "/admin" : "/dashboard"} />;
+  }
+
+  return <>{children}</>;
+};
+
+function AppContent() {
+  const [sidebarOpen, setSidebarOpen] = React.useState(false);
+
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <AppSidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+      <div className={`transition-all duration-300 ${sidebarOpen ? "lg:ml-[280px]" : "lg:ml-0"}`}>
+        <Header onToggle={() => setSidebarOpen(!sidebarOpen)} />
+        <main>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute requiredRole="student">
+                  <StudentDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="/" element={<Navigate to="/dashboard" />} />
+          </Routes>
+        </main>
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <Router>
+      <ThemeProvider>
+        <AuthProvider>
+          <SidebarProvider>
+            <AppContent />
+          </SidebarProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </Router>
+  );
+}
+
+export default App;

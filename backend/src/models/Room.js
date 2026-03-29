@@ -27,7 +27,8 @@ const roomSchema = new mongoose.Schema({
   },
   occupants: [{
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
+    ref: 'User',
+    default: []
   }],
   genderRestriction: {
     type: String,
@@ -41,7 +42,8 @@ const roomSchema = new mongoose.Schema({
   },
   amenities: [{
     type: String,
-    enum: ['bed', 'mattress', 'wardrobe', 'desk', 'chair', 'fan', 'ac', 'wifi', 'attached_bathroom']
+    enum: ['bed', 'mattress', 'wardrobe', 'desk', 'chair', 'fan', 'ac', 'wifi', 'attached_bathroom'],
+    default: []
   }],
   status: {
     type: String,
@@ -76,23 +78,27 @@ const roomSchema = new mongoose.Schema({
   toObject: { virtuals: true }
 });
 
-// Virtual for current occupants count
+// Virtual for current occupants count - FIXED
 roomSchema.virtual('currentOccupancy').get(function() {
-  return this.occupants.length;
+  return this.occupants ? this.occupants.length : 0;
 });
 
-// Virtual for occupancy percentage
+// Virtual for occupancy percentage - FIXED
 roomSchema.virtual('occupancyPercentage').get(function() {
-  return (this.occupants.length / this.capacity) * 100;
+  if (this.capacity && this.occupants) {
+    return (this.occupants.length / this.capacity) * 100;
+  }
+  return 0;
 });
 
 // Update status and availableSlots before saving
 roomSchema.pre('save', function(next) {
-  this.availableSlots = this.capacity - this.occupants.length;
+  const occupantCount = this.occupants ? this.occupants.length : 0;
+  this.availableSlots = this.capacity - occupantCount;
   
   if (this.availableSlots === 0) {
     this.status = 'full';
-  } else if (this.occupants.length > 0) {
+  } else if (occupantCount > 0) {
     this.status = 'occupied';
   } else {
     this.status = 'available';
@@ -104,7 +110,7 @@ roomSchema.pre('save', function(next) {
 
 // Ensure gender restriction matches occupants
 roomSchema.pre('save', async function(next) {
-  if (this.occupants.length > 0 && this.genderRestriction !== 'any') {
+  if (this.occupants && this.occupants.length > 0 && this.genderRestriction !== 'any') {
     const User = mongoose.model('User');
     const occupants = await User.find({ _id: { $in: this.occupants } });
     

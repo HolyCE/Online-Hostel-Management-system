@@ -10,7 +10,7 @@ import {
 import { Visibility, VisibilityOff, Email, Lock, Login as LoginIcon } from '@mui/icons-material';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
 import './Login.css';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';

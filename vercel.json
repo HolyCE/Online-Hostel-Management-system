@@ -1,0 +1,14 @@
+{
+  "buildCommand": "cd frontend && npm install && npm run build",
+  "outputDirectory": "frontend/dist",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ],
+  "env": {
+    "VITE_API_URL": "https://your-render-backend-url.onrender.com/api",
+    "VITE_PAYSTACK_PUBLIC_KEY": "pk_test_7fab5c29d364e15f1bdb4c9d3e4b0027758440d9"
+  }
+}

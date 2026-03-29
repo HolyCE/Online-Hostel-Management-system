@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Payment = require('../models/Payment');
 const User = require('../models/User');
 const Room = require('../models/Room');
@@ -14,82 +15,145 @@ const paystack = axios.create({
   }
 });
 
+// Helper function to allocate room after payment
+const allocateRoomAfterPayment = async (studentId, roomId) => {
+  try {
+    console.log(`Allocating room ${roomId} to student ${studentId}`);
+    
+    const student = await User.findById(studentId);
+    const room = await Room.findById(roomId);
+    
+    if (!student || !room) {
+      console.error('Student or room not found');
+      return false;
+    }
+    
+    // Check if student already has a room
+    if (student.room) {
+      console.log('Student already has a room:', student.room);
+      return false;
+    }
+    
+    // Check if room has capacity
+    const currentOccupants = room.occupants ? room.occupants.length : 0;
+    if (currentOccupants >= room.capacity) {
+      console.log('Room is full');
+      return false;
+    }
+    
+    // Update student with room
+    await User.findByIdAndUpdate(studentId, { room: roomId });
+    
+    // Update room with student
+    if (!room.occupants) room.occupants = [];
+    room.occupants.push(studentId);
+    await room.save();
+    
+    console.log(`✅ Room ${room.roomNumber} allocated to ${student.name}`);
+    
+    // Send notification
+    await Notification.create({
+      recipient: studentId,
+      type: 'in_app',
+      channel: 'room',
+      subject: 'Room Allocated Successfully! 🎉',
+      content: `You have been allocated Room ${room.roomNumber} in ${room.blockName}. Welcome to your new space!`,
+      status: 'sent',
+      sentAt: new Date()
+    });
+    
+    return true;
+  } catch (error) {
+    console.error('Room allocation error:', error);
+    return false;
+  }
+};
+
 // @desc    Initialize payment
 // @route   POST /api/payments/initialize
 // @access  Private
 exports.initializePayment = async (req, res) => {
   try {
-    const student = await User.findById(req.user.id).populate('room');
+    const { amount, roomId, roomNumber, studentName, duration } = req.body;
+    const student = await User.findById(req.user.id);
     
-    if (!student.room) {
-      return res.status(400).json({
+    if (!student) {
+      return res.status(404).json({
         success: false,
-        message: 'You need to have a room allocated first'
+        message: 'Student not found'
       });
     }
 
-    // Check if already paid for current session
-    const currentYear = new Date().getFullYear();
-    const sessionYear = `${currentYear}/${currentYear + 1}`;
-    
-    const existingPayment = await Payment.findOne({
-      student: student._id,
-      sessionYear,
-      status: 'success'
-    });
-
-    if (existingPayment) {
+    // Check if student already has a room
+    if (student.room) {
       return res.status(400).json({
         success: false,
-        message: 'You have already paid for this session'
+        message: 'You already have a room allocated. You cannot pay for another room.'
       });
     }
 
-    // Initialize payment with Paystack
-    const response = await paystack.post('/transaction/initialize', {
-      email: student.email,
-      amount: student.room.price * 100, // Paystack uses kobo
-      metadata: {
-        studentId: student._id.toString(),
-        studentName: student.name,
-        matricNumber: student.matricNumber,
-        roomNumber: student.room.roomNumber,
-        roomPrice: student.room.price
-      },
-      callback_url: `${process.env.FRONTEND_URL}/payment/verify`,
-      channels: ['card', 'bank', 'ussd', 'qr']
-    });
+    const room = await Room.findById(roomId);
+    if (!room) {
+      return res.status(404).json({
+        success: false,
+        message: 'Room not found'
+      });
+    }
+
+    // Check if room is available
+    if (room.status !== 'available') {
+      return res.status(400).json({
+        success: false,
+        message: `This room is currently ${room.status}. Please select another room.`
+      });
+    }
+
+    // Generate a unique reference
+    const reference = `PAY-${Date.now()}-${Math.random().toString(36).substring(7)}`;
 
     // Create payment record
     const payment = await Payment.create({
       student: student._id,
-      room: student.room._id,
-      amount: student.room.price,
-      reference: response.data.data.reference,
+      room: roomId,
+      amount: amount,
+      reference: reference,
       status: 'pending',
-      sessionYear,
-      metadata: response.data.data.metadata
+      sessionYear: `${new Date().getFullYear()}/${new Date().getFullYear() + 1}`,
+      paidFor: 'accommodation',
+      metadata: {
+        roomNumber: roomNumber,
+        studentName: student.name,
+        paymentType: 'room_allocation',
+        duration: duration || 'session'
+      }
     });
 
-    // Log action
-    await AuditLog.create({
-      user: student._id,
-      action: 'CREATE_PAYMENT',
-      details: `Payment initialized: ₦${student.room.price}`,
-      resource: 'payment',
-      resourceId: payment._id,
-      ip: req.ip,
-      userAgent: req.get('User-Agent'),
-      status: 'success'
+    // Initialize with Paystack
+    const paystackResponse = await paystack.post('/transaction/initialize', {
+      email: student.email,
+      amount: amount * 100,
+      reference: reference,
+      metadata: {
+        studentId: student._id.toString(),
+        studentName: student.name,
+        matricNumber: student.matricNumber,
+        roomId: roomId,
+        roomNumber: roomNumber,
+        paymentId: payment._id.toString(),
+        duration: duration || 'session'
+      },
+      callback_url: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/dashboard/payments`
     });
+
+    console.log(`✅ Payment initialized for ${student.name} - Room ${roomNumber} - Ref: ${reference}`);
 
     res.json({
       success: true,
       message: 'Payment initialized successfully',
       data: {
-        authorizationUrl: response.data.data.authorization_url,
-        reference: response.data.data.reference,
-        amount: student.room.price
+        authorizationUrl: paystackResponse.data.data.authorization_url,
+        reference: reference,
+        amount: amount
       }
     });
 
@@ -109,76 +173,119 @@ exports.initializePayment = async (req, res) => {
 exports.verifyPayment = async (req, res) => {
   try {
     const { reference } = req.params;
+    console.log('🔍 Verifying payment with reference:', reference);
 
-    // Verify with Paystack
-    const response = await paystack.get(`/transaction/verify/${reference}`);
-
-    if (response.data.data.status === 'success') {
-      // Update payment record
-      const payment = await Payment.findOneAndUpdate(
-        { reference },
-        {
-          status: 'success',
-          transactionId: response.data.data.id,
-          paymentDate: new Date(),
-          metadata: {
-            ...response.data.data,
-            verifiedAt: new Date()
-          }
-        },
-        { new: true }
-      ).populate('student');
-
-      if (payment) {
-        // Send notification
-        await Notification.create({
-          recipient: payment.student._id,
-          type: 'in_app',
-          channel: 'payment',
-          subject: 'Payment Successful',
-          content: `Your payment of ₦${payment.amount} has been confirmed. Reference: ${payment.reference}`,
-          data: { paymentId: payment._id, reference: payment.reference },
-          status: 'sent',
-          sentAt: new Date()
-        });
-
-        // Log action
-        await AuditLog.create({
-          user: payment.student._id,
-          action: 'VERIFY_PAYMENT',
-          details: `Payment verified: ₦${payment.amount}`,
-          resource: 'payment',
-          resourceId: payment._id,
-          ip: req.ip,
-          userAgent: req.get('User-Agent'),
-          status: 'success'
-        });
-      }
-
-      res.json({
-        success: true,
-        message: 'Payment verified successfully',
-        data: payment
-      });
-    } else {
-      res.status(400).json({
+    const payment = await Payment.findOne({ reference });
+    if (!payment) {
+      console.log('❌ Payment not found for reference:', reference);
+      return res.status(404).json({
         success: false,
-        message: 'Payment verification failed',
-        data: response.data.data
+        message: 'Payment not found'
       });
     }
 
+    console.log('📋 Payment found:', {
+      id: payment._id,
+      status: payment.status,
+      amount: payment.amount,
+      student: payment.student
+    });
+
+    // If payment is already successful, just return it
+    if (payment.status === 'success') {
+      console.log('✅ Payment already verified');
+      return res.json({
+        success: true,
+        message: 'Payment already verified',
+        data: payment
+      });
+    }
+
+    // Verify with Paystack
+    try {
+      const response = await paystack.get(`/transaction/verify/${reference}`);
+      const paystackData = response.data.data;
+      console.log('📊 Paystack response status:', paystackData.status);
+
+      if (paystackData.status === 'success') {
+        // Update payment record
+        payment.status = 'success';
+        payment.transactionId = paystackData.id;
+        payment.paymentDate = new Date();
+        payment.metadata = {
+          ...payment.metadata,
+          paystackResponse: paystackData,
+          verifiedAt: new Date()
+        };
+        await payment.save();
+        console.log('✅ Payment record updated to success');
+
+        // Allocate room to student
+        const allocated = await allocateRoomAfterPayment(payment.student, payment.room);
+        
+        if (allocated) {
+          console.log('✅ Room allocated successfully');
+          
+          // Log action
+          await AuditLog.create({
+            user: payment.student,
+            action: 'VERIFY_PAYMENT',
+            details: `Payment verified: ₦${payment.amount}`,
+            resource: 'payment',
+            resourceId: payment._id,
+            ip: req.ip,
+            userAgent: req.get('User-Agent'),
+            status: 'success'
+          });
+        }
+
+        res.json({
+          success: true,
+          message: 'Payment verified successfully! Room allocated.',
+          data: payment
+        });
+      } else {
+        // Payment failed or was abandoned
+        payment.status = 'failed';
+        await payment.save();
+        
+        console.log('❌ Payment not successful:', paystackData.status);
+        res.json({
+          success: false,
+          message: `Payment ${paystackData.status}. Please try again.`,
+          data: paystackData
+        });
+      }
+    } catch (paystackError) {
+      console.error('❌ Paystack verification error:', paystackError.response?.data || paystackError.message);
+      
+      // Don't mark as failed if it's just a connection issue
+      if (paystackError.response?.data?.status === 'abandoned') {
+        res.json({
+          success: false,
+          message: 'Payment was not completed. Please try again.',
+          data: paystackError.response?.data
+        });
+      } else {
+        res.status(500).json({
+          success: false,
+          message: 'Failed to verify payment with Paystack. Please contact support.',
+          error: paystackError.response?.data?.message || paystackError.message
+        });
+      }
+    }
+
   } catch (error) {
-    console.error('Payment verification error:', error.response?.data || error.message);
+    console.error('❌ Payment verification error:', error);
     res.status(500).json({
       success: false,
       message: 'Payment verification failed',
-      error: error.response?.data?.message || error.message
+      error: error.message
     });
   }
 };
 
-// @desc    Get user payments
+// @desc    Get my payments
 // @route   GET /api/payments/my-payments
 // @access  Private
 exports.getMyPayments = async (req, res) => {
@@ -186,7 +293,7 @@ exports.getMyPayments = async (req, res) => {
     const payments = await Payment.find({ student: req.user.id })
       .populate('room', 'roomNumber blockName')
       .sort({ createdAt: -1 });
-
+    
     res.json({
       success: true,
       count: payments.length,
@@ -207,30 +314,20 @@ exports.getMyPayments = async (req, res) => {
 // @access  Private/Admin
 exports.getAllPayments = async (req, res) => {
   try {
-    const { status, sessionYear, page = 1, limit = 20 } = req.query;
-    
-    const filter = {};
+    const { status, limit = 50 } = req.query;
+    let filter = {};
     if (status) filter.status = status;
-    if (sessionYear) filter.sessionYear = sessionYear;
-
+    
     const payments = await Payment.find(filter)
       .populate('student', 'name email matricNumber')
       .populate('room', 'roomNumber blockName')
       .sort({ createdAt: -1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit);
-
-    const total = await Payment.countDocuments(filter);
-
+      .limit(parseInt(limit));
+    
     res.json({
       success: true,
-      data: payments,
-      pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
-        total,
-        pages: Math.ceil(total / limit)
-      }
+      count: payments.length,
+      data: payments
     });
   } catch (error) {
     console.error('Get all payments error:', error);
@@ -242,80 +339,39 @@ exports.getAllPayments = async (req, res) => {
   }
 };
 
-// @desc    Paystack webhook
+// @desc    Handle webhook
 // @route   POST /api/payments/webhook
 // @access  Public
 exports.handleWebhook = async (req, res) => {
   try {
-    // Validate webhook signature
-    const hash = crypto.createHmac('sha512', process.env.PAYSTACK_SECRET_KEY)
-      .update(JSON.stringify(req.body))
-      .digest('hex');
-
-    if (hash !== req.headers['x-paystack-signature']) {
-      return res.status(401).json({ message: 'Invalid signature' });
-    }
-
     const event = req.body;
-
-    // Handle different event types
-    switch (event.event) {
-      case 'charge.success':
-        await handleSuccessfulCharge(event.data);
-        break;
-      case 'charge.failed':
-        await handleFailedCharge(event.data);
-        break;
-      case 'transfer.success':
-        await handleTransferSuccess(event.data);
-        break;
-      default:
-        console.log(`Unhandled event type: ${event.event}`);
+    console.log('Webhook received:', event.event);
+    
+    if (event.event === 'charge.success') {
+      const reference = event.data.reference;
+      
+      const payment = await Payment.findOneAndUpdate(
+        { reference },
+        {
+          status: 'success',
+          transactionId: event.data.id,
+          paymentDate: new Date(),
+          metadata: event.data
+        },
+        { new: true }
+      );
+      
+      if (payment && payment.status === 'success') {
+        await allocateRoomAfterPayment(payment.student, payment.room);
+        console.log('✅ Webhook: Room allocated');
+      }
     }
-
-    res.sendStatus(200);
+    
+    res.json({ success: true });
   } catch (error) {
     console.error('Webhook error:', error);
-    res.sendStatus(500);
+    res.status(500).json({ success: false });
   }
 };
 
-// Helper functions for webhook handling
-async function handleSuccessfulCharge(data) {
-  const payment = await Payment.findOneAndUpdate(
-    { reference: data.reference },
-    {
-      status: 'success',
-      transactionId: data.id,
-      paymentDate: new Date(),
-      metadata: data
-    },
-    { new: true }
-  ).populate('student');
-
-  if (payment) {
-    await Notification.create({
-      recipient: payment.student._id,
-      type: 'in_app',
-      channel: 'payment',
-      subject: 'Payment Confirmed (Webhook)',
-      content: `Your payment of ₦${payment.amount} has been confirmed.`,
-      status: 'sent',
-      sentAt: new Date()
-    });
-  }
-}
-
-async function handleFailedCharge(data) {
-  await Payment.findOneAndUpdate(
-    { reference: data.reference },
-    {
-      status: 'failed',
-      metadata: data
-    }
-  );
-}
-
-async function handleTransferSuccess(data) {
-  console.log('Transfer successful:', data.reference);
-}
+module.exports = exports;

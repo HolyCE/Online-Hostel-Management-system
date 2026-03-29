@@ -39,7 +39,7 @@
     "docker:run": "docker run -p 5000:5000 hostel-backend"
   },
   "dependencies": {
-    "@faker-js/faker": "^10.3.0",
+    "@faker-js/faker": "^10.4.0",
     "axios": "^1.13.5",
     "bcryptjs": "^2.4.3",
     "bull": "^4.11.5",

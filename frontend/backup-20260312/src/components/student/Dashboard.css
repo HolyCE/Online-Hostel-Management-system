@@ -591,7 +591,7 @@ body {
 
 .tabs {
   min-height: 56px;
-  width: 100%;
+  width: 50px;
 }
 
 .tabs .MuiTab-root {
@@ -1100,13 +1100,13 @@ body {
 }
 
 .stat-card .MuiCardContent-root {
-  padding: 28px !important; /* Increase padding */
+  padding: 12px !important; /* Increase padding */
 }
 
 /* Increase icon size */
 .stat-icon-wrapper {
-  width: 72px !important;  /* Was 56px */
-  height: 72px !important; /* Was 56px */
+  width: 52px !important;  /* Was 56px */
+  height: 52px !important; /* Was 56px */
 }
 
 .stat-icon {
@@ -1126,7 +1126,7 @@ body {
 
 /* Increase mini stat cards */
 .mini-stat-item {
-  padding: 12px 0 !important;
+  padding: 22px 0 !important;
 }
 
 .mini-stat-icon {

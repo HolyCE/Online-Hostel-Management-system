@@ -1,0 +1,263 @@
+/* Login.css - Clean and modern styling */
+
+.login-container {
+  margin-top: 80px;
+  margin-bottom: 32px;
+}
+
+.login-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.login-paper {
+  padding: 48px 64px;
+  width: 100%;
+  border-radius: 24px !important;
+  background-color: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .login-paper {
+    background-color: #171717;
+    border-color: rgba(255, 255, 255, 0.05);
+  }
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.login-title {
+  font-weight: 800 !important;
+  letter-spacing: -0.02em !important;
+  margin-bottom: 8px !important;
+  color: #000000;
+}
+
+@media (prefers-color-scheme: dark) {
+  .login-title {
+    color: #ffffff;
+  }
+}
+
+.login-subtitle {
+  color: #6b7280;
+  font-size: 1rem !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  .login-subtitle {
+    color: #a1a1aa;
+  }
+}
+
+.login-alert {
+  margin-bottom: 32px;
+  border-radius: 12px !important;
+}
+
+.login-form {
+  width: 100%;
+}
+
+.login-input {
+  margin-bottom: 24px !important;
+}
+
+.login-input .MuiOutlinedInput-root {
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.login-input .MuiOutlinedInput-root:hover {
+  border-color: #000000;
+}
+
+@media (prefers-color-scheme: dark) {
+  .login-input .MuiOutlinedInput-root:hover {
+    border-color: #ffffff;
+  }
+}
+
+.login-input .MuiOutlinedInput-root.Mui-focused fieldset {
+  border-width: 2px;
+}
+
+.input-icon {
+  color: rgba(0, 0, 0, 0.4);
+  font-size: 1.2rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  .input-icon {
+    color: rgba(255, 255, 255, 0.4);
+  }
+}
+
+.password-toggle {
+  color: rgba(0, 0, 0, 0.4) !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  .password-toggle {
+    color: rgba(255, 255, 255, 0.4) !important;
+  }
+}
+
+.forgot-password {
+  margin-top: 8px;
+  text-align: right;
+}
+
+.forgot-link {
+  color: inherit;
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 500;
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+}
+
+.forgot-link:hover {
+  opacity: 1;
+  text-decoration: underline;
+}
+
+@media (prefers-color-scheme: dark) {
+  .forgot-link {
+    color: #ffffff;
+  }
+}
+
+.login-button {
+  margin-top: 40px !important;
+  margin-bottom: 24px !important;
+  padding: 14px !important;
+  background-color: #000000 !important;
+  color: #ffffff !important;
+  border-radius: 12px !important;
+  font-weight: 600 !important;
+  font-size: 1rem !important;
+  text-transform: none !important;
+  border: 1px solid transparent !important;
+  transition: all 0.2s ease !important;
+  box-shadow: none !important;
+}
+
+.login-button:hover {
+  background-color: #333333 !important;
+  transform: translateY(-1px);
+}
+
+.login-button:disabled {
+  background-color: #cccccc !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  .login-button {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+  }
+  
+  .login-button:hover {
+    background-color: #f4f4f5 !important;
+  }
+}
+
+.button-icon {
+  margin-left: 8px;
+  font-size: 1.2rem !important;
+}
+
+.login-divider {
+  margin: 32px 0 !important;
+  border-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  .login-divider {
+    border-color: rgba(255, 255, 255, 0.1) !important;
+  }
+}
+
+.divider-text {
+  color: #6b7280;
+  padding: 0 16px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .divider-text {
+    color: #a1a1aa;
+  }
+}
+
+.register-link {
+  text-align: center;
+}
+
+.register-text {
+  color: #6b7280;
+  font-size: 1rem !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  .register-text {
+    color: #a1a1aa;
+  }
+}
+
+.register-button {
+  color: inherit;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  margin-left: 4px;
+}
+
+.register-button:hover {
+  text-decoration: underline;
+}
+
+@media (prefers-color-scheme: dark) {
+  .register-button {
+    color: #ffffff;
+  }
+}
+
+/* Responsive styles */
+@media (max-width: 600px) {
+  .login-paper {
+    padding: 32px 24px;
+  }
+  
+  .login-title {
+    font-size: 2rem !important;
+  }
+  
+  .login-container {
+    margin-top: 40px;
+  }
+}
+
+/* Animation keyframes */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.6s ease-out;
+}

@@ -23,6 +23,7 @@ import {
   Tooltip,
   Fade,
   Zoom,
+  LinearProgress as ProgressLinear,
 } from '@mui/material';
 import {
   MeetingRoom,
@@ -167,8 +168,6 @@ const Dashboard = () => {
 
   useEffect(() => {
     fetchDashboardData();
-    const interval = setInterval(fetchDashboardData, 30000);
-    return () => clearInterval(interval);
   }, []);
 
   const fetchDashboardData = async () => {
@@ -293,26 +292,33 @@ const Dashboard = () => {
       </Box>
 
       <Container maxWidth="xl" className="dashboard-container">
-        {/* Header Section - Fixed spacing from navbar */}
+        {/* Header Section */}
         <Box className="dashboard-header">
           <Box className="header-left">
             <Box className="welcome-badge">
               <span className="badge-dot"></span>
               <Typography variant="caption" className="badge-text">
-                STUDENT PORTAL
+                PREMIUM DASHBOARD
               </Typography>
             </Box>
             <Typography variant="h3" className="welcome-title">
-              Welcome back, {user?.name?.split(' ')[0] || 'Chisom'}
+              {user?.name?.split(' ')[0] || 'Chisom'}
               <span className="welcome-emoji">✨</span>
             </Typography>
             <Typography variant="body1" className="welcome-subtitle">
-              Here's what's happening with your accommodation today
+              Curated insights for your premium experience
             </Typography>
           </Box>
 
           <Box className="header-right">
             <Paper className="quick-stats">
+              <Box className="quick-stat-item">
+                <Typography variant="caption" className="stat-label-small">Status</Typography>
+                <Typography variant="h6" className="stat-value-small">
+                  {userRoom ? 'Active' : 'Pending'}
+                </Typography>
+              </Box>
+              <Divider orientation="vertical" flexItem className="stat-divider" />
               <Box className="quick-stat-item">
                 <Typography variant="caption" className="stat-label-small">Room</Typography>
                 <Typography variant="h6" className="stat-value-small">
@@ -321,16 +327,9 @@ const Dashboard = () => {
               </Box>
               <Divider orientation="vertical" flexItem className="stat-divider" />
               <Box className="quick-stat-item">
-                <Typography variant="caption" className="stat-label-small">Block</Typography>
+                <Typography variant="caption" className="stat-label-small">Level</Typography>
                 <Typography variant="h6" className="stat-value-small">
-                  {userRoom ? userRoom.blockName : '—'}
-                </Typography>
-              </Box>
-              <Divider orientation="vertical" flexItem className="stat-divider" />
-              <Box className="quick-stat-item">
-                <Typography variant="caption" className="stat-label-small">Floor</Typography>
-                <Typography variant="h6" className="stat-value-small">
-                  {userRoom ? userRoom.floorNumber : '—'}
+                  {userRoom ? `Floor ${userRoom.floorNumber}` : '—'}
                 </Typography>
               </Box>
             </Paper>
@@ -361,21 +360,45 @@ const Dashboard = () => {
           </Alert>
         )}
 
-        {/* Stats Cards - 4 cards per row (1/4 width each) */}
+        {/* Stats Cards - Luxury Edition */}
         <Grid container spacing={3} className="stats-grid">
-          {/* Card 1 - Room Status */}
+          {/* Card 1 - Room Status - Glass Morph */}
           <Grid item xs={12} sm={6} md={3}>
             <Zoom in timeout={300}>
-              <Card className="stat-card">
+              <Card className="stat-card" sx={{ 
+                background: 'linear-gradient(145deg, rgba(26,26,35,0.9) 0%, rgba(18,18,24,0.95) 100%)',
+                backdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255,107,107,0.2)',
+                position: 'relative',
+                overflow: 'hidden',
+                '&::before': {
+                  content: '""',
+                  position: 'absolute',
+                  top: 0,
+                  left: '-50%',
+                  width: '150%',
+                  height: '100%',
+                  background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent)',
+                  transform: 'skewX(-15deg)',
+                  animation: 'shimmer 3s infinite',
+                },
+              }}>
                 <CardContent>
-                  <Box className="stat-icon-wrapper" sx={{ bgcolor: 'rgba(255, 107, 107, 0.15)' }}>
+                  <Box className="stat-icon-wrapper" sx={{ 
+                    bgcolor: 'rgba(255, 107, 107, 0.15)',
+                    boxShadow: '0 8px 16px rgba(255,107,107,0.2)',
+                  }}>
                     <Home className="stat-icon" sx={{ color: '#FF6B6B' }} />
                   </Box>
                   <Typography variant="body2" className="stat-label">
-                    Room Status
+                    Residence Status
                   </Typography>
-                  <Typography variant="h4" className="stat-value">
-                    {userRoom ? 'Allocated' : 'Available'}
+                  <Typography variant="h4" className="stat-value" sx={{ 
+                    background: 'linear-gradient(135deg, #FF6B6B, #FF8E8E)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                  }}>
+                    {userRoom ? 'Active' : 'Open'}
                   </Typography>
                   {userRoom ? (
                     <Box className="stat-details">
@@ -383,15 +406,20 @@ const Dashboard = () => {
                         label={`${userRoom.roomNumber} · ${userRoom.blockName}`}
                         size="small"
                         className="stat-chip"
+                        sx={{ bgcolor: 'rgba(255,107,107,0.15) !important', color: '#FF6B6B !important' }}
                       />
+                      <Box className="progress-bar" sx={{ width: '100%', mt: 1 }}>
+                        <Box className="progress-fill" sx={{ width: '75%', background: 'linear-gradient(90deg, #FF6B6B, #FF8E8E)' }} />
+                      </Box>
                     </Box>
                   ) : (
                     <Button
                       size="small"
                       className="stat-action-btn"
                       onClick={() => navigate('/rooms')}
+                      sx={{ background: 'linear-gradient(135deg, #FF6B6B, #FF8E8E) !important', color: '#fff !important' }}
                     >
-                      Apply Now
+                      Secure Now
                     </Button>
                   )}
                 </CardContent>
@@ -399,18 +427,29 @@ const Dashboard = () => {
             </Zoom>
           </Grid>
 
-          {/* Card 2 - Total Spent */}
+          {/* Card 2 - Total Spent - Gold Edition */}
           <Grid item xs={12} sm={6} md={3}>
             <Zoom in timeout={400}>
-              <Card className="stat-card">
+              <Card className="stat-card" sx={{ 
+                background: 'linear-gradient(145deg, rgba(26,26,35,0.9) 0%, rgba(18,18,24,0.95) 100%)',
+                backdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255,209,102,0.2)',
+              }}>
                 <CardContent>
-                  <Box className="stat-icon-wrapper" sx={{ bgcolor: 'rgba(78, 205, 196, 0.15)' }}>
-                    <AccountBalanceWallet className="stat-icon" sx={{ color: '#4ECDC4' }} />
+                  <Box className="stat-icon-wrapper" sx={{ 
+                    bgcolor: 'rgba(255, 209, 102, 0.15)',
+                    boxShadow: '0 8px 16px rgba(255,209,102,0.2)',
+                  }}>
+                    <AccountBalanceWallet className="stat-icon" sx={{ color: '#FFD166' }} />
                   </Box>
                   <Typography variant="body2" className="stat-label">
-                    Total Spent
+                    Total Investment
                   </Typography>
-                  <Typography variant="h4" className="stat-value">
+                  <Typography variant="h4" className="stat-value" sx={{ 
+                    background: 'linear-gradient(135deg, #FFD166, #FFE194)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                  }}>
                     ₦{stats.totalSpent.toLocaleString() || '0'}
                   </Typography>
                   <Box className="stat-details">
@@ -418,25 +457,38 @@ const Dashboard = () => {
                       label={`${stats.totalPayments} transactions`}
                       size="small"
                       className="stat-chip"
+                      sx={{ bgcolor: 'rgba(255,209,102,0.15) !important', color: '#FFD166 !important' }}
                     />
+                    <Typography variant="caption" sx={{ color: '#FFD166' }}>+12.4%</Typography>
                   </Box>
                 </CardContent>
               </Card>
             </Zoom>
           </Grid>
 
-          {/* Card 3 - Open Tickets */}
+          {/* Card 3 - Open Tickets - Emerald Edition */}
           <Grid item xs={12} sm={6} md={3}>
             <Zoom in timeout={500}>
-              <Card className="stat-card">
+              <Card className="stat-card" sx={{ 
+                background: 'linear-gradient(145deg, rgba(26,26,35,0.9) 0%, rgba(18,18,24,0.95) 100%)',
+                backdropFilter: 'blur(20px)',
+                border: '1px solid rgba(78,205,196,0.2)',
+              }}>
                 <CardContent>
-                  <Box className="stat-icon-wrapper" sx={{ bgcolor: 'rgba(255, 209, 102, 0.15)' }}>
-                    <ConfirmationNumber className="stat-icon" sx={{ color: '#FFD166' }} />
+                  <Box className="stat-icon-wrapper" sx={{ 
+                    bgcolor: 'rgba(78, 205, 196, 0.15)',
+                    boxShadow: '0 8px 16px rgba(78,205,196,0.2)',
+                  }}>
+                    <ConfirmationNumber className="stat-icon" sx={{ color: '#4ECDC4' }} />
                   </Box>
                   <Typography variant="body2" className="stat-label">
-                    Open Tickets
+                    Active Tickets
                   </Typography>
-                  <Typography variant="h4" className="stat-value">
+                  <Typography variant="h4" className="stat-value" sx={{ 
+                    background: 'linear-gradient(135deg, #4ECDC4, #7FDFD8)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                  }}>
                     {stats.pendingTickets || '0'}
                   </Typography>
                   <Box className="stat-details">
@@ -444,33 +496,51 @@ const Dashboard = () => {
                       label={`${stats.resolvedTickets} resolved`}
                       size="small"
                       className="stat-chip"
+                      sx={{ bgcolor: 'rgba(78,205,196,0.15) !important', color: '#4ECDC4 !important' }}
                     />
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <TrendingDown sx={{ color: '#4ECDC4', fontSize: 16 }} />
+                      <Typography variant="caption" sx={{ color: '#4ECDC4' }}>-23%</Typography>
+                    </Box>
                   </Box>
                 </CardContent>
               </Card>
             </Zoom>
           </Grid>
 
-          {/* Card 4 - Session Ends */}
+          {/* Card 4 - Session Ends - Purple Edition */}
           <Grid item xs={12} sm={6} md={3}>
             <Zoom in timeout={600}>
-              <Card className="stat-card">
+              <Card className="stat-card" sx={{ 
+                background: 'linear-gradient(145deg, rgba(26,26,35,0.9) 0%, rgba(18,18,24,0.95) 100%)',
+                backdropFilter: 'blur(20px)',
+                border: '1px solid rgba(108,92,231,0.2)',
+              }}>
                 <CardContent>
-                  <Box className="stat-icon-wrapper" sx={{ bgcolor: 'rgba(108, 92, 231, 0.15)' }}>
+                  <Box className="stat-icon-wrapper" sx={{ 
+                    bgcolor: 'rgba(108, 92, 231, 0.15)',
+                    boxShadow: '0 8px 16px rgba(108,92,231,0.2)',
+                  }}>
                     <AccessTime className="stat-icon" sx={{ color: '#6C5CE7' }} />
                   </Box>
                   <Typography variant="body2" className="stat-label">
-                    Session Ends
+                    Time Remaining
                   </Typography>
-                  <Typography variant="h4" className="stat-value">
+                  <Typography variant="h4" className="stat-value" sx={{ 
+                    background: 'linear-gradient(135deg, #6C5CE7, #9A8CFF)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                  }}>
                     {stats.daysRemaining}d
                   </Typography>
                   <Box className="stat-details">
-                    <Box className="progress-bar">
-                      <Box
-                        className="progress-fill"
-                        sx={{ width: `${(stats.daysRemaining / 180) * 100}%` }}
-                      />
+                    <Box className="progress-bar" sx={{ width: '100%', bgcolor: 'rgba(108,92,231,0.2)' }}>
+                      <Box className="progress-fill" sx={{ 
+                        width: `${(stats.daysRemaining / 180) * 100}%`, 
+                        background: 'linear-gradient(90deg, #6C5CE7, #9A8CFF)',
+                        height: '8px',
+                        borderRadius: '4px',
+                      }} />
                     </Box>
                   </Box>
                 </CardContent>
@@ -479,16 +549,24 @@ const Dashboard = () => {
           </Grid>
         </Grid>
 
-        {/* Charts & Overview Section - 2/3 and 1/3 split */}
+        {/* Charts & Overview Section - Premium Layout */}
         <Grid container spacing={3} className="overview-grid">
-          {/* Left chart - 2/3 width */}
+          {/* Left chart - 2/3 width with glass effect */}
           <Grid item xs={12} lg={8}>
             <Fade in timeout={700}>
-              <Card className="chart-card">
+              <Card className="chart-card" sx={{ 
+                background: 'linear-gradient(145deg, rgba(26,26,35,0.9) 0%, rgba(18,18,24,0.95) 100%)',
+                backdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255,255,255,0.05)',
+              }}>
                 <CardContent>
                   <Box className="chart-header">
-                    <Typography variant="h6" className="chart-title">
-                      Spending Overview
+                    <Typography variant="h6" className="chart-title" sx={{ 
+                      background: 'linear-gradient(135deg, #FF6B6B, #4ECDC4, #6C5CE7)',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                    }}>
+                      Financial Analytics
                     </Typography>
                     <Box className="chart-legend">
                       <Box className="legend-item">
@@ -506,30 +584,32 @@ const Dashboard = () => {
                     </Box>
                   </Box>
                   <Box className="chart-container">
-                    <ResponsiveContainer width="100%" height={300}>
+                    <ResponsiveContainer width="100%" height={350}>
                       <AreaChart data={stats.monthlySpending.length ? stats.monthlySpending : dummyData}>
                         <defs>
                           <linearGradient id="accommodationGradient" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#FF6B6B" stopOpacity={0.3} />
+                            <stop offset="5%" stopColor="#FF6B6B" stopOpacity={0.4} />
                             <stop offset="95%" stopColor="#FF6B6B" stopOpacity={0} />
                           </linearGradient>
                           <linearGradient id="foodGradient" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#4ECDC4" stopOpacity={0.3} />
+                            <stop offset="5%" stopColor="#4ECDC4" stopOpacity={0.4} />
                             <stop offset="95%" stopColor="#4ECDC4" stopOpacity={0} />
                           </linearGradient>
                           <linearGradient id="utilitiesGradient" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#FFD166" stopOpacity={0.3} />
+                            <stop offset="5%" stopColor="#FFD166" stopOpacity={0.4} />
                             <stop offset="95%" stopColor="#FFD166" stopOpacity={0} />
                           </linearGradient>
                         </defs>
-                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                        <XAxis dataKey="month" stroke="#888" tick={{ fill: '#888' }} />
-                        <YAxis stroke="#888" tick={{ fill: '#888' }} />
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                        <XAxis dataKey="month" stroke="rgba(255,255,255,0.3)" tick={{ fill: 'rgba(255,255,255,0.5)' }} />
+                        <YAxis stroke="rgba(255,255,255,0.3)" tick={{ fill: 'rgba(255,255,255,0.5)' }} />
                         <ChartTooltip
                           contentStyle={{
-                            backgroundColor: '#1A1A1A',
-                            border: '1px solid #333',
-                            borderRadius: '8px',
+                            backgroundColor: 'rgba(26,26,35,0.95)',
+                            backdropFilter: 'blur(10px)',
+                            border: '1px solid rgba(255,255,255,0.1)',
+                            borderRadius: '12px',
+                            boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
                           }}
                           labelStyle={{ color: '#FFF' }}
                         />
@@ -565,58 +645,99 @@ const Dashboard = () => {
             </Fade>
           </Grid>
 
-          {/* Right mini stats - 1/3 width */}
+          {/* Right mini stats - 1/3 width with luxury feel */}
           <Grid item xs={12} lg={4}>
             <Fade in timeout={800}>
-              <Card className="stats-mini-card">
+              <Card className="stats-mini-card" sx={{ 
+                background: 'linear-gradient(145deg, rgba(26,26,35,0.9) 0%, rgba(18,18,24,0.95) 100%)',
+                backdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255,255,255,0.05)',
+              }}>
                 <CardContent>
-                  <Typography variant="h6" className="card-title" gutterBottom>
-                    Quick Overview
+                  <Typography variant="h6" className="card-title" gutterBottom sx={{ 
+                    background: 'linear-gradient(135deg, #FF6B6B, #4ECDC4)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                  }}>
+                    Premium Overview
                   </Typography>
                   
                   <Box className="mini-stat-item">
-                    <Box className="mini-stat-icon" sx={{ bgcolor: 'rgba(255, 107, 107, 0.15)' }}>
-                      <MeetingRoom sx={{ color: '#FF6B6B', fontSize: 20 }} />
+                    <Box className="mini-stat-icon" sx={{ 
+                      bgcolor: 'rgba(255, 107, 107, 0.15)',
+                      boxShadow: '0 4px 12px rgba(255,107,107,0.2)',
+                    }}>
+                      <MeetingRoom sx={{ color: '#FF6B6B', fontSize: 28 }} />
                     </Box>
                     <Box className="mini-stat-content">
                       <Typography variant="body2" className="mini-stat-label">
                         Occupancy Rate
                       </Typography>
-                      <Typography variant="h5" className="mini-stat-value">
+                      <Typography variant="h5" className="mini-stat-value" sx={{ color: '#FF6B6B' }}>
                         {stats.occupancyRate}%
                       </Typography>
+                      <ProgressLinear 
+                        variant="determinate" 
+                        value={stats.occupancyRate} 
+                        sx={{ 
+                          height: 4, 
+                          borderRadius: 2,
+                          bgcolor: 'rgba(255,107,107,0.2)',
+                          '& .MuiLinearProgress-bar': {
+                            background: 'linear-gradient(90deg, #FF6B6B, #FF8E8E)',
+                          }
+                        }} 
+                      />
                     </Box>
                   </Box>
 
                   <Box className="mini-stat-item">
-                    <Box className="mini-stat-icon" sx={{ bgcolor: 'rgba(78, 205, 196, 0.15)' }}>
-                      <Group sx={{ color: '#4ECDC4', fontSize: 20 }} />
+                    <Box className="mini-stat-icon" sx={{ 
+                      bgcolor: 'rgba(78, 205, 196, 0.15)',
+                      boxShadow: '0 4px 12px rgba(78,205,196,0.2)',
+                    }}>
+                      <Group sx={{ color: '#4ECDC4', fontSize: 28 }} />
                     </Box>
                     <Box className="mini-stat-content">
                       <Typography variant="body2" className="mini-stat-label">
                         Roommates
                       </Typography>
-                      <Typography variant="h5" className="mini-stat-value">
+                      <Typography variant="h5" className="mini-stat-value" sx={{ color: '#4ECDC4' }}>
                         {roommates.length}
                       </Typography>
+                      <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
+                        {roommates.slice(0, 3).map((mate, i) => (
+                          <Avatar key={i} sx={{ width: 24, height: 24, bgcolor: '#4ECDC4' }}>
+                            {mate.name?.charAt(0)}
+                          </Avatar>
+                        ))}
+                        {roommates.length > 3 && (
+                          <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)' }}>
+                            +{roommates.length - 3}
+                          </Typography>
+                        )}
+                      </Box>
                     </Box>
                   </Box>
 
                   <Box className="mini-stat-item">
-                    <Box className="mini-stat-icon" sx={{ bgcolor: 'rgba(255, 209, 102, 0.15)' }}>
-                      <Payment sx={{ color: '#FFD166', fontSize: 20 }} />
+                    <Box className="mini-stat-icon" sx={{ 
+                      bgcolor: 'rgba(255, 209, 102, 0.15)',
+                      boxShadow: '0 4px 12px rgba(255,209,102,0.2)',
+                    }}>
+                      <Payment sx={{ color: '#FFD166', fontSize: 28 }} />
                     </Box>
                     <Box className="mini-stat-content">
                       <Typography variant="body2" className="mini-stat-label">
                         Next Payment
                       </Typography>
-                      <Typography variant="h5" className="mini-stat-value">
+                      <Typography variant="h5" className="mini-stat-value" sx={{ color: '#FFD166' }}>
                         {payments.length > 0 ? '₦' + payments[0]?.amount?.toLocaleString() : '—'}
                       </Typography>
                     </Box>
                   </Box>
 
-                  <Divider sx={{ my: 2, borderColor: '#333' }} />
+                  <Divider sx={{ my: 3, borderColor: 'rgba(255,255,255,0.1)' }} />
 
                   <Box className="quick-actions">
                     <Button
@@ -625,6 +746,14 @@ const Dashboard = () => {
                       className="quick-action-button"
                       onClick={() => navigate('/payments')}
                       startIcon={<Payment />}
+                      sx={{ 
+                        borderColor: 'rgba(255,107,107,0.3)',
+                        color: '#FF6B6B',
+                        '&:hover': {
+                          borderColor: '#FF6B6B',
+                          background: 'rgba(255,107,107,0.1)',
+                        }
+                      }}
                     >
                       Make Payment
                     </Button>
@@ -634,6 +763,14 @@ const Dashboard = () => {
                       className="quick-action-button"
                       onClick={() => navigate('/complaints/new')}
                       startIcon={<Report />}
+                      sx={{ 
+                        borderColor: 'rgba(78,205,196,0.3)',
+                        color: '#4ECDC4',
+                        '&:hover': {
+                          borderColor: '#4ECDC4',
+                          background: 'rgba(78,205,196,0.1)',
+                        }
+                      }}
                     >
                       Report Issue
                     </Button>
@@ -644,41 +781,90 @@ const Dashboard = () => {
           </Grid>
         </Grid>
 
-        {/* Tabs Section - Full width */}
+        {/* Tabs Section - Luxury Edition */}
         <Box className="tabs-section">
-          <Paper className="tabs-header">
+          <Paper className="tabs-header" sx={{ 
+            background: 'linear-gradient(145deg, rgba(26,26,35,0.9) 0%, rgba(18,18,24,0.95) 100%) !important',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255,255,255,0.05)',
+          }}>
             <Tabs value={activeTab} onChange={handleTabChange} className="tabs">
-              <Tab icon={<MeetingRoom />} label="Available Rooms" />
-              <Tab icon={<Receipt />} label="Payment History" />
-              <Tab icon={<Report />} label="Support Tickets" />
+              <Tab 
+                icon={<MeetingRoom />} 
+                label="Available Rooms" 
+                sx={{ 
+                  '&.Mui-selected': { 
+                    color: '#FF6B6B !important',
+                    '& .MuiTab-iconWrapper': { color: '#FF6B6B' }
+                  }
+                }} 
+              />
+              <Tab 
+                icon={<Receipt />} 
+                label="Payment History"
+                sx={{ 
+                  '&.Mui-selected': { 
+                    color: '#4ECDC4 !important',
+                    '& .MuiTab-iconWrapper': { color: '#4ECDC4' }
+                  }
+                }} 
+              />
+              <Tab 
+                icon={<Report />} 
+                label="Support Tickets"
+                sx={{ 
+                  '&.Mui-selected': { 
+                    color: '#6C5CE7 !important',
+                    '& .MuiTab-iconWrapper': { color: '#6C5CE7' }
+                  }
+                }} 
+              />
             </Tabs>
           </Paper>
 
-          {/* Available Rooms Tab - 3 cards per row */}
+          {/* Available Rooms Tab - Luxury Cards */}
           {activeTab === 0 && (
             <Fade in>
-              <Card className="content-card">
+              <Card className="content-card" sx={{ 
+                background: 'linear-gradient(145deg, rgba(26,26,35,0.9) 0%, rgba(18,18,24,0.95) 100%) !important',
+                backdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255,255,255,0.05)',
+              }}>
                 <CardContent>
                   <Box className="content-header">
-                    <Typography variant="h6">Available Rooms</Typography>
+                    <Typography variant="h6" sx={{ 
+                      background: 'linear-gradient(135deg, #FF6B6B, #4ECDC4)',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                    }}>
+                      Available Rooms
+                    </Typography>
                     <Box className="content-actions">
                       <TextField
-                        placeholder="Search rooms..."
+                        placeholder="Search premium rooms..."
                         size="small"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         InputProps={{
                           startAdornment: (
                             <InputAdornment position="start">
-                              <Search sx={{ color: '#888' }} />
+                              <Search sx={{ color: 'rgba(255,255,255,0.5)' }} />
                             </InputAdornment>
                           ),
                         }}
                         className="search-field"
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            '& fieldset': { borderColor: 'rgba(255,255,255,0.1)' },
+                            '&:hover fieldset': { borderColor: 'rgba(255,107,107,0.3)' },
+                            '&.Mui-focused fieldset': { borderColor: '#FF6B6B' },
+                          }
+                        }}
                       />
                       <Button
                         className="view-all-link"
                         onClick={() => navigate('/rooms')}
+                        sx={{ color: '#FF6B6B' }}
                       >
                         View All <ArrowForward />
                       </Button>
@@ -687,8 +873,8 @@ const Dashboard = () => {
 
                   {availableRooms.length === 0 ? (
                     <Box className="empty-state">
-                      <Typography variant="body1" color="textSecondary">
-                        No rooms available at the moment
+                      <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.5)' }}>
+                        No premium rooms available at the moment
                       </Typography>
                     </Box>
                   ) : (
@@ -696,7 +882,14 @@ const Dashboard = () => {
                       {availableRooms.map((room, index) => (
                         <Grid item xs={12} sm={6} md={4} key={room._id}>
                           <Fade in timeout={900 + index * 100}>
-                            <Box className="room-card">
+                            <Box className="room-card" sx={{ 
+                              background: 'rgba(255,255,255,0.02)',
+                              border: '1px solid rgba(255,255,255,0.05)',
+                              '&:hover': {
+                                borderColor: '#FF6B6B',
+                                boxShadow: '0 20px 40px rgba(255,107,107,0.2)',
+                              }
+                            }}>
                               <Box className="room-image">
                                 <img
                                   src={room.images?.[0] || 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af'}
@@ -714,22 +907,27 @@ const Dashboard = () => {
                                   )}
                                 </IconButton>
                                 <Chip
-                                  label="Available"
+                                  label="Premium"
                                   size="small"
                                   className="room-status"
+                                  sx={{ 
+                                    background: 'linear-gradient(135deg, #FF6B6B, #FF8E8E) !important',
+                                    color: '#fff !important',
+                                    fontWeight: 600,
+                                  }}
                                 />
                               </Box>
                               <Box className="room-info">
                                 <Box className="room-header">
-                                  <Typography variant="subtitle1" className="room-number">
+                                  <Typography variant="subtitle1" className="room-number" sx={{ color: '#FF6B6B' }}>
                                     {room.roomNumber}
                                   </Typography>
-                                  <Typography variant="subtitle1" className="room-price">
+                                  <Typography variant="subtitle1" className="room-price" sx={{ color: '#4ECDC4' }}>
                                     ₦{room.price.toLocaleString()}
                                   </Typography>
                                 </Box>
                                 <Typography variant="caption" className="room-location">
-                                  <LocationOn sx={{ fontSize: 14 }} />
+                                  <LocationOn sx={{ fontSize: 14, color: 'rgba(255,255,255,0.5)' }} />
                                   {room.blockName}, Floor {room.floorNumber}
                                 </Typography>
                                 <Box className="room-amenities">
@@ -739,6 +937,10 @@ const Dashboard = () => {
                                       label={amenity}
                                       size="small"
                                       className="amenity-chip"
+                                      sx={{ 
+                                        bgcolor: 'rgba(255,255,255,0.05) !important',
+                                        color: 'rgba(255,255,255,0.7) !important',
+                                      }}
                                     />
                                   ))}
                                 </Box>
@@ -747,6 +949,14 @@ const Dashboard = () => {
                                   variant="outlined"
                                   className="view-room-btn"
                                   onClick={() => navigate(`/rooms/${room._id}`)}
+                                  sx={{ 
+                                    borderColor: 'rgba(255,107,107,0.3)',
+                                    color: '#FF6B6B',
+                                    '&:hover': {
+                                      borderColor: '#FF6B6B',
+                                      background: 'rgba(255,107,107,0.1)',
+                                    }
+                                  }}
                                 >
                                   View Details
                                 </Button>
@@ -765,13 +975,24 @@ const Dashboard = () => {
           {/* Payment History Tab */}
           {activeTab === 1 && (
             <Fade in>
-              <Card className="content-card">
+              <Card className="content-card" sx={{ 
+                background: 'linear-gradient(145deg, rgba(26,26,35,0.9) 0%, rgba(18,18,24,0.95) 100%) !important',
+                backdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255,255,255,0.05)',
+              }}>
                 <CardContent>
                   <Box className="content-header">
-                    <Typography variant="h6">Recent Payments</Typography>
+                    <Typography variant="h6" sx={{ 
+                      background: 'linear-gradient(135deg, #4ECDC4, #FFD166)',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                    }}>
+                      Transaction History
+                    </Typography>
                     <Button
                       className="view-all-link"
                       onClick={() => navigate('/payments')}
+                      sx={{ color: '#4ECDC4' }}
                     >
                       View All <ArrowForward />
                     </Button>
@@ -779,18 +1000,24 @@ const Dashboard = () => {
 
                   {payments.length === 0 ? (
                     <Box className="empty-state">
-                      <Typography variant="body1" color="textSecondary">
-                        No payment history yet
+                      <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.5)' }}>
+                        No transaction history yet
                       </Typography>
                     </Box>
                   ) : (
                     <Box className="payment-list">
                       {payments.slice(0, 5).map((payment, index) => (
                         <Fade in timeout={900 + index * 100} key={payment._id}>
-                          <Box className="payment-item">
+                          <Box className="payment-item" sx={{ 
+                            background: 'rgba(255,255,255,0.02)',
+                            border: '1px solid rgba(255,255,255,0.05)',
+                            '&:hover': {
+                              borderColor: '#4ECDC4',
+                            }
+                          }}>
                             <Box className="payment-info">
                               <Box>
-                                <Typography variant="subtitle2" className="payment-amount">
+                                <Typography variant="subtitle2" className="payment-amount" sx={{ color: '#4ECDC4' }}>
                                   ₦{payment.amount.toLocaleString()}
                                 </Typography>
                                 <Typography variant="caption" className="payment-ref">
@@ -806,9 +1033,13 @@ const Dashboard = () => {
                                 label={payment.status}
                                 size="small"
                                 className={`payment-status ${payment.status}`}
+                                sx={{ 
+                                  bgcolor: payment.status === 'success' ? 'rgba(78,205,196,0.15) !important' : 'rgba(255,209,102,0.15) !important',
+                                  color: payment.status === 'success' ? '#4ECDC4 !important' : '#FFD166 !important',
+                                }}
                               />
                               <IconButton size="small" className="payment-menu">
-                                <MoreVert sx={{ fontSize: 16 }} />
+                                <MoreVert sx={{ fontSize: 16, color: 'rgba(255,255,255,0.5)' }} />
                               </IconButton>
                             </Box>
                           </Box>
@@ -824,13 +1055,24 @@ const Dashboard = () => {
           {/* Support Tickets Tab */}
           {activeTab === 2 && (
             <Fade in>
-              <Card className="content-card">
+              <Card className="content-card" sx={{ 
+                background: 'linear-gradient(145deg, rgba(26,26,35,0.9) 0%, rgba(18,18,24,0.95) 100%) !important',
+                backdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255,255,255,0.05)',
+              }}>
                 <CardContent>
                   <Box className="content-header">
-                    <Typography variant="h6">Recent Tickets</Typography>
+                    <Typography variant="h6" sx={{ 
+                      background: 'linear-gradient(135deg, #6C5CE7, #9A8CFF)',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                    }}>
+                      Support Tickets
+                    </Typography>
                     <Button
                       className="view-all-link"
                       onClick={() => navigate('/complaints')}
+                      sx={{ color: '#6C5CE7' }}
                     >
                       View All <ArrowForward />
                     </Button>
@@ -838,15 +1080,21 @@ const Dashboard = () => {
 
                   {tickets.length === 0 ? (
                     <Box className="empty-state">
-                      <Typography variant="body1" color="textSecondary">
-                        No tickets yet
+                      <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.5)' }}>
+                        No support tickets yet
                       </Typography>
                     </Box>
                   ) : (
                     <Box className="ticket-list">
                       {tickets.slice(0, 5).map((ticket, index) => (
                         <Fade in timeout={900 + index * 100} key={ticket._id}>
-                          <Box className="ticket-item">
+                          <Box className="ticket-item" sx={{ 
+                            background: 'rgba(255,255,255,0.02)',
+                            border: '1px solid rgba(255,255,255,0.05)',
+                            '&:hover': {
+                              borderColor: '#6C5CE7',
+                            }
+                          }}>
                             <Box className="ticket-info">
                               <Box className="ticket-header">
                                 <Typography variant="subtitle2" className="ticket-title">
@@ -856,6 +1104,14 @@ const Dashboard = () => {
                                   label={ticket.priority}
                                   size="small"
                                   className={`ticket-priority ${ticket.priority}`}
+                                  sx={{ 
+                                    bgcolor: ticket.priority === 'high' ? 'rgba(255,107,107,0.15) !important' : 
+                                           ticket.priority === 'medium' ? 'rgba(255,209,102,0.15) !important' : 
+                                           'rgba(78,205,196,0.15) !important',
+                                    color: ticket.priority === 'high' ? '#FF6B6B !important' : 
+                                           ticket.priority === 'medium' ? '#FFD166 !important' : 
+                                           '#4ECDC4 !important',
+                                  }}
                                 />
                               </Box>
                               <Typography variant="caption" className="ticket-category">
@@ -867,6 +1123,14 @@ const Dashboard = () => {
                                 label={ticket.status}
                                 size="small"
                                 className={`ticket-status ${ticket.status}`}
+                                sx={{ 
+                                  bgcolor: ticket.status === 'resolved' ? 'rgba(78,205,196,0.15) !important' : 
+                                          ticket.status === 'in_progress' ? 'rgba(108,92,231,0.15) !important' : 
+                                          'rgba(255,209,102,0.15) !important',
+                                  color: ticket.status === 'resolved' ? '#4ECDC4 !important' : 
+                                          ticket.status === 'in_progress' ? '#6C5CE7 !important' : 
+                                          '#FFD166 !important',
+                                }}
                               />
                               <Typography variant="caption" className="ticket-date">
                                 {new Date(ticket.createdAt).toLocaleDateString()}
@@ -883,6 +1147,16 @@ const Dashboard = () => {
           )}
         </Box>
       </Container>
+
+      {/* Add keyframe animation for shimmer effect */}
+      <style>
+        {`
+          @keyframes shimmer {
+            0% { transform: translateX(-100%) skewX(-15deg); }
+            100% { transform: translateX(200%) skewX(-15deg); }
+          }
+        `}
+      </style>
     </Box>
   );
 };

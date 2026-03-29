@@ -24,7 +24,6 @@ exports.createTicket = async (req, res) => {
       room: student.room._id
     });
 
-    // Log action
     await AuditLog.create({
       user: student._id,
       action: 'CREATE_TICKET',
@@ -53,10 +52,8 @@ exports.createTicket = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: 'Ticket created successfully',
       data: ticket
     });
-
   } catch (error) {
     console.error('Create ticket error:', error);
     res.status(500).json({
@@ -67,33 +64,20 @@ exports.createTicket = async (req, res) => {
   }
 };
 
-// @desc    Get user's tickets
+// @desc    Get my tickets (student)
 // @route   GET /api/tickets/my-tickets
 // @access  Private
 exports.getMyTickets = async (req, res) => {
   try {
-    const { status, page = 1, limit = 10 } = req.query;
-    
-    const filter = { student: req.user.id };
-    if (status) filter.status = status;
-
-    const tickets = await MaintenanceTicket.find(filter)
+    const tickets = await MaintenanceTicket.find({ student: req.user.id })
+      .populate('student', 'name email')
       .populate('room', 'roomNumber blockName')
-      .sort({ createdAt: -1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit);
-
-    const total = await MaintenanceTicket.countDocuments(filter);
-
+      .sort({ createdAt: -1 });
+    
     res.json({
       success: true,
-      data: tickets,
-      pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
-        total,
-        pages: Math.ceil(total / limit)
-      }
+      count: tickets.length,
+      data: tickets
     });
   } catch (error) {
     console.error('Get my tickets error:', error);
@@ -105,33 +89,32 @@ exports.getMyTickets = async (req, res) => {
   }
 };
 
-// @desc    Get single ticket
+// @desc    Get ticket by ID
 // @route   GET /api/tickets/:id
 // @access  Private
 exports.getTicket = async (req, res) => {
   try {
     const ticket = await MaintenanceTicket.findById(req.params.id)
-      .populate('student', 'name email matricNumber phoneNumber')
+      .populate('student', 'name email')
       .populate('room', 'roomNumber blockName')
-      .populate('assignedTo', 'name email role')
-      .populate('resolvedBy', 'name email')
+      .populate('assignedTo', 'name')
       .populate('comments.user', 'name role');
-
+    
     if (!ticket) {
       return res.status(404).json({
         success: false,
         message: 'Ticket not found'
       });
     }
-
-    // Check if user has permission to view
-    if (ticket.student._id.toString() !== req.user.id && req.user.role !== 'admin') {
+    
+    // Check if user is authorized (student who created it or admin)
+    if (req.user.role !== 'admin' && ticket.student._id.toString() !== req.user.id) {
       return res.status(403).json({
         success: false,
-        message: 'You do not have permission to view this ticket'
+        message: 'Not authorized to view this ticket'
       });
     }
-
+    
     res.json({
       success: true,
       data: ticket
@@ -151,59 +134,53 @@ exports.getTicket = async (req, res) => {
 // @access  Private/Admin
 exports.updateTicketStatus = async (req, res) => {
   try {
-    const { status, resolution, assignedTo, priority } = req.body;
+    const { status, assignedTo, resolution } = req.body;
     
-    const ticket = await MaintenanceTicket.findById(req.params.id)
-      .populate('student');
-
+    const ticket = await MaintenanceTicket.findById(req.params.id);
     if (!ticket) {
       return res.status(404).json({
         success: false,
         message: 'Ticket not found'
       });
     }
-
+    
     // Update fields
     if (status) ticket.status = status;
-    if (resolution) ticket.resolution = resolution;
     if (assignedTo) ticket.assignedTo = assignedTo;
-    if (priority) ticket.priority = priority;
-
-    // Set resolved info
-    if (status === 'resolved') {
+    if (resolution) ticket.resolution = resolution;
+    
+    if (status === 'resolved' && !ticket.resolvedAt) {
       ticket.resolvedAt = new Date();
       ticket.resolvedBy = req.user.id;
     }
-
+    
     await ticket.save();
-
-    // Log action
+    
+    // Notify student
+    await Notification.create({
+      recipient: ticket.student,
+      type: 'in_app',
+      channel: 'ticket',
+      subject: 'Ticket Status Updated',
+      content: `Your ticket "${ticket.title}" has been updated to ${status}`,
+      data: { ticketId: ticket._id },
+      status: 'sent',
+      sentAt: new Date()
+    });
+    
     await AuditLog.create({
       user: req.user.id,
       action: 'UPDATE_TICKET',
-      details: `Ticket ${ticket._id} updated to status: ${ticket.status}`,
+      details: `Updated ticket ${ticket.title} status to ${status}`,
       resource: 'ticket',
       resourceId: ticket._id,
       ip: req.ip,
       userAgent: req.get('User-Agent'),
       status: 'success'
     });
-
-    // Notify student
-    await Notification.create({
-      recipient: ticket.student._id,
-      type: 'in_app',
-      channel: 'ticket',
-      subject: 'Ticket Status Updated',
-      content: `Your ticket "${ticket.title}" is now ${ticket.status}`,
-      data: { ticketId: ticket._id, status: ticket.status },
-      status: 'sent',
-      sentAt: new Date()
-    });
-
+    
     res.json({
       success: true,
-      message: 'Ticket updated successfully',
       data: ticket
     });
   } catch (error) {
@@ -222,54 +199,42 @@ exports.updateTicketStatus = async (req, res) => {
 exports.addComment = async (req, res) => {
   try {
     const { comment } = req.body;
-
-    if (!comment) {
-      return res.status(400).json({
-        success: false,
-        message: 'Comment is required'
-      });
-    }
-
-    const ticket = await MaintenanceTicket.findById(req.params.id)
-      .populate('student');
-
+    
+    const ticket = await MaintenanceTicket.findById(req.params.id);
     if (!ticket) {
       return res.status(404).json({
         success: false,
         message: 'Ticket not found'
       });
     }
-
-    // Add comment
+    
     ticket.comments.push({
       user: req.user.id,
-      comment,
+      comment: comment,
       createdAt: new Date()
     });
-
+    
     await ticket.save();
-
-    // Notify the other party
-    const notifyUser = req.user.id === ticket.student._id.toString() 
-      ? ticket.assignedTo 
-      : ticket.student._id;
-
-    if (notifyUser) {
+    
+    // Notify the other party (if student comments, notify admin; if admin comments, notify student)
+    const notifyUser = req.user.role === 'admin' ? ticket.student : (await User.find({ role: 'admin' })).map(a => a._id);
+    const recipients = req.user.role === 'admin' ? [ticket.student] : (await User.find({ role: 'admin' })).map(a => a._id);
+    
+    for (const recipient of recipients) {
       await Notification.create({
-        recipient: notifyUser,
+        recipient: recipient,
         type: 'in_app',
         channel: 'ticket',
         subject: 'New Comment on Ticket',
-        content: `New comment on ticket "${ticket.title}": ${comment.substring(0, 50)}...`,
+        content: `${req.user.name} commented on ticket "${ticket.title}": ${comment.substring(0, 100)}`,
         data: { ticketId: ticket._id },
         status: 'sent',
         sentAt: new Date()
       });
     }
-
+    
     res.json({
       success: true,
-      message: 'Comment added successfully',
       data: ticket
     });
   } catch (error) {
@@ -282,51 +247,34 @@ exports.addComment = async (req, res) => {
   }
 };
 
-// @desc    Get all tickets (Admin)
+// @desc    Get all tickets (Admin only) - NO LIMIT BY DEFAULT
 // @route   GET /api/tickets/admin/all
 // @access  Private/Admin
 exports.getAllTickets = async (req, res) => {
   try {
-    const { status, priority, category, page = 1, limit = 20 } = req.query;
-    
-    const filter = {};
+    const { status, priority, limit } = req.query;
+    let filter = {};
     if (status) filter.status = status;
     if (priority) filter.priority = priority;
-    if (category) filter.category = category;
-
-    const tickets = await MaintenanceTicket.find(filter)
-      .populate('student', 'name email matricNumber room')
+    
+    // Build query
+    let query = MaintenanceTicket.find(filter)
+      .populate('student', 'name email matricNumber')
       .populate('room', 'roomNumber blockName')
-      .populate('assignedTo', 'name email')
-      .sort({ 
-        priority: -1, // Emergency first
-        createdAt: -1 
-      })
-      .limit(limit * 1)
-      .skip((page - 1) * limit);
-
-    const total = await MaintenanceTicket.countDocuments(filter);
-
-    // Get statistics
-    const stats = await MaintenanceTicket.aggregate([
-      {
-        $group: {
-          _id: '$status',
-          count: { $sum: 1 }
-        }
-      }
-    ]);
-
+      .populate('assignedTo', 'name')
+      .sort({ createdAt: -1 });
+    
+    // Only apply limit if specified, otherwise return all
+    if (limit && parseInt(limit) > 0) {
+      query = query.limit(parseInt(limit));
+    }
+    
+    const tickets = await query;
+    
     res.json({
       success: true,
-      data: tickets,
-      statistics: stats,
-      pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
-        total,
-        pages: Math.ceil(total / limit)
-      }
+      count: tickets.length,
+      data: tickets
     });
   } catch (error) {
     console.error('Get all tickets error:', error);

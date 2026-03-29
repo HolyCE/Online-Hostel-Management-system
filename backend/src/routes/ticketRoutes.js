@@ -17,7 +17,7 @@ router.get('/:id', protect, getTicket);
 router.post('/:id/comments', protect, addComment);
 
 // Admin routes
-router.put('/:id', protect, authorize('admin', 'staff'), updateTicketStatus);
+router.put('/:id', protect, authorize('admin'), updateTicketStatus);
 router.get('/admin/all', protect, authorize('admin'), getAllTickets);
 
 module.exports = router;

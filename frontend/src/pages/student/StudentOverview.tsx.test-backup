@@ -1,0 +1,66 @@
+import React from 'react';
+
+const StudentOverview = () => {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-purple-100 to-indigo-200 p-8">
+      <div className="max-w-4xl mx-auto">
+        {/* Hero Card */}
+        <div className="bg-white rounded-2xl shadow-xl overflow-hidden mb-8 transform hover:scale-105 transition-transform duration-300">
+          <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-8 py-12 text-center">
+            <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
+              Tailwind CSS is Working! 🎉
+            </h1>
+            <p className="text-xl text-blue-100">
+              If you can see this styled card, Tailwind is properly configured.
+            </p>
+          </div>
+          <div className="p-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-blue-50 p-6 rounded-xl border-2 border-blue-200 hover:shadow-lg transition">
+                <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center mb-4">
+                  <span className="text-white text-xl">1</span>
+                </div>
+                <h3 className="text-lg font-semibold text-gray-800 mb-2">Responsive Grid</h3>
+                <p className="text-gray-600">This grid adjusts from 1 to 3 columns on desktop.</p>
+              </div>
+              
+              <div className="bg-green-50 p-6 rounded-xl border-2 border-green-200 hover:shadow-lg transition">
+                <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center mb-4">
+                  <span className="text-white text-xl">2</span>
+                </div>
+                <h3 className="text-lg font-semibold text-gray-800 mb-2">Hover Effects</h3>
+                <p className="text-gray-600">Cards scale and shadow on hover.</p>
+              </div>
+              
+              <div className="bg-purple-50 p-6 rounded-xl border-2 border-purple-200 hover:shadow-lg transition">
+                <div className="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center mb-4">
+                  <span className="text-white text-xl">3</span>
+                </div>
+                <h3 className="text-lg font-semibold text-gray-800 mb-2">Gradient Background</h3>
+                <p className="text-gray-600">The hero section uses Tailwind gradients.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Color Palette Test */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="bg-red-500 text-white p-4 rounded-lg text-center font-bold shadow-md">Red</div>
+          <div className="bg-blue-500 text-white p-4 rounded-lg text-center font-bold shadow-md">Blue</div>
+          <div className="bg-green-500 text-white p-4 rounded-lg text-center font-bold shadow-md">Green</div>
+          <div className="bg-purple-500 text-white p-4 rounded-lg text-center font-bold shadow-md">Purple</div>
+        </div>
+
+        {/* Text style test */}
+        <div className="mt-8 text-center">
+          <p className="text-sm text-gray-500">Small gray text</p>
+          <p className="text-base text-gray-700">Base gray text</p>
+          <p className="text-lg text-gray-900 font-semibold">Large dark text with font-semibold</p>
+          <p className="text-xl text-blue-600 font-bold underline decoration-wavy">Blue text with wavy underline</p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default StudentOverview;

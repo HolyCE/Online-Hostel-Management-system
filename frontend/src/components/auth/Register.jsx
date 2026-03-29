@@ -12,7 +12,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
-import { useThemeContext } from '../../context/ThemeContext';
+import { useThemeContext } from '../../contexts/ThemeContext';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
