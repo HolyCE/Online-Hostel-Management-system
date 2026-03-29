@@ -59,7 +59,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, setCollapsed }) => {
         {!collapsed && (
           <div className="whitespace-nowrap">
             <span className="text-lg font-bold text-black">Hostel</span>
-            <span className="text-lg font-bold text-gray-600">Hub</span>
+            <span className="text-lg font-bold text-gray-600">Manager</span>
           </div>
         )}
       </div>
