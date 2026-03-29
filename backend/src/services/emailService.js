@@ -19,7 +19,7 @@ const sendEmail = async (to, subject, html, text = '') => {
     const transporter = createTransporter();
     
     const mailOptions = {
-      from: process.env.EMAIL_FROM || `"HostelHub" <${process.env.EMAIL_USER}>`,
+      from: process.env.EMAIL_FROM || `"HostelManager" <${process.env.EMAIL_USER}>`,
       to,
       subject,
       text: text || html.replace(/<[^>]*>/g, ''),
@@ -38,10 +38,10 @@ const sendEmail = async (to, subject, html, text = '') => {
 // Email templates
 const templates = {
   welcome: (name, email, password) => ({
-    subject: 'Welcome to HostelHub!',
+    subject: 'Welcome to HostelManager!',
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #000;">Welcome to HostelHub, ${name}!</h2>
+        <h2 style="color: #000;">Welcome to HostelManager, ${name}!</h2>
         <p>Your account has been created successfully.</p>
         <p><strong>Login Credentials:</strong></p>
         <ul>
