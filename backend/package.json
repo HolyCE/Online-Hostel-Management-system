@@ -1,151 +1,30 @@
 {
   "name": "hostel-management-backend",
   "version": "1.0.0",
-  "description": "Backend API for Online Hostel Management System with RBAC, Payment Integration, and Complaint Management",
+  "description": "Backend for Hostel Management System",
   "main": "src/server.js",
-  "author": "Your Name",
-  "license": "ISC",
-  "private": true,
-  "keywords": [
-    "hostel",
-    "management",
-    "nodejs",
-    "express",
-    "mongodb",
-    "jwt",
-    "paystack",
-    "rbac"
-  ],
-  "engines": {
-    "node": ">=18.0.0",
-    "npm": ">=9.0.0"
-  },
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server-color.js",
-    "dev:debug": "nodemon --inspect src/server.js",
-    "prod": "NODE_ENV=production node src/server.js",
-    "test": "jest --coverage --verbose",
-    "test:watch": "jest --watch",
-    "test:unit": "jest --testPathPattern=tests/unit",
-    "test:integration": "jest --testPathPattern=tests/integration",
-    "lint": "eslint src/**/*.js",
-    "lint:fix": "eslint src/**/*.js --fix",
-    "format": "prettier --write \"src/**/*.js\"",
-    "db:seed": "node src/seeders/index.js",
-    "db:seed:refresh": "node src/seeders/refresh.js",
-    "clean": "rm -rf node_modules dist coverage",
-    "docker:build": "docker build -t hostel-backend .",
-    "docker:run": "docker run -p 5000:5000 hostel-backend"
+    "seed": "node seed-data.js"
   },
   "dependencies": {
-    "@faker-js/faker": "^10.4.0",
-    "axios": "^1.13.5",
+    "axios": "^1.6.2",
     "bcryptjs": "^2.4.3",
-    "bull": "^4.11.5",
-    "compression": "^1.8.1",
-    "connect-mongo": "^5.1.0",
-    "cookie-parser": "^1.4.6",
-    "cors": "^2.8.6",
-    "dotenv": "^16.6.1",
-    "express": "^4.22.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
     "express-async-errors": "^3.1.1",
-    "express-mongo-sanitize": "^2.2.0",
-    "express-rate-limit": "^7.5.1",
-    "express-session": "^1.17.3",
-    "express-validator": "^7.3.1",
-    "helmet": "^7.2.0",
-    "hpp": "^0.2.3",
-    "joi": "^17.13.3",
-    "joi-objectid": "^4.0.2",
-    "jsonwebtoken": "^9.0.3",
-    "moment": "^2.29.4",
-    "moment-timezone": "^0.5.43",
-    "mongoose": "^8.23.0",
-    "morgan": "^1.10.1",
-    "multer": "^1.4.5-lts.1",
-    "node-cache": "^5.1.2",
-    "node-cron": "^3.0.3",
-    "nodemailer": "^6.10.1",
-    "paystack": "^2.0.1",
-    "pdfkit": "^0.14.0",
-    "qrcode": "^1.5.3",
-    "redis": "^4.6.11",
-    "sharp": "^0.33.5",
-    "socket.io": "^4.5.4",
-    "stripe": "^14.9.0",
-    "swagger-jsdoc": "^6.2.8",
-    "swagger-ui-express": "^5.0.0",
-    "twilio": "^4.23.0",
-    "uuid": "^9.0.1",
-    "validator": "^13.11.0",
-    "winston": "^3.11.0",
-    "xss": "^1.0.14",
-    "xss-clean": "^0.1.4"
+    "express-rate-limit": "^7.1.5",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.0.3",
+    "nodemailer": "^6.9.8",
+    "uuid": "^9.0.1"
   },
   "devDependencies": {
-    "@babel/core": "^7.23.5",
-    "@babel/preset-env": "^7.23.5",
-    "@types/jest": "^29.5.10",
-    "babel-jest": "^29.7.0",
-    "eslint": "^8.55.0",
-    "eslint-config-airbnb-base": "^15.0.0",
-    "eslint-config-prettier": "^9.1.0",
-    "eslint-plugin-import": "^2.29.0",
-    "eslint-plugin-jest": "^27.6.0",
-    "eslint-plugin-prettier": "^5.0.1",
-    "eslint-plugin-security": "^1.7.1",
-    "husky": "^8.0.3",
-    "jest": "^29.7.0",
-    "lint-staged": "^15.2.0",
-    "nodemon": "^3.1.13",
-    "prettier": "^3.1.0",
-    "supertest": "^6.3.3"
+    "nodemon": "^3.0.2"
   },
-  "lint-staged": {
-    "src/**/*.js": [
-      "eslint --fix",
-      "prettier --write"
-    ]
-  },
-  "jest": {
-    "testEnvironment": "node",
-    "coveragePathIgnorePatterns": [
-      "/node_modules/"
-    ],
-    "collectCoverageFrom": [
-      "src/**/*.js",
-      "!src/server.js",
-      "!src/config/**"
-    ],
-    "setupFilesAfterEnv": [
-      "<rootDir>/tests/setup.js"
-    ],
-    "testMatch": [
-      "**/tests/**/*.test.js"
-    ],
-    "verbose": true
-  },
-  "nodemonConfig": {
-    "watch": [
-      "src"
-    ],
-    "ignore": [
-      "tests/**",
-      "logs/**",
-      "node_modules/**"
-    ],
-    "ext": "js,json",
-    "delay": "2500",
-    "env": {
-      "NODE_ENV": "development"
-    }
-  },
-  "prettier": {
-    "semi": true,
-    "trailingComma": "none",
-    "singleQuote": true,
-    "printWidth": 100,
-    "tabWidth": 2
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
