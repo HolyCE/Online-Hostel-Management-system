@@ -3,6 +3,7 @@ import { Outlet, Navigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import Sidebar from './Sidebar';
 import TopBar from './TopBar';
+import MobileMenu from './MobileMenu';
 
 const DashboardLayout = () => {
   const { isAuthenticated } = useAuth();
@@ -12,14 +13,11 @@ const DashboardLayout = () => {
 
   useEffect(() => {
     const checkMobile = () => {
-      const mobile = window.innerWidth < 768;
-      setIsMobile(mobile);
-
-      if (!mobile) {
-        setMobileMenuOpen(false); // auto close on desktop
+      setIsMobile(window.innerWidth < 768);
+      if (window.innerWidth >= 768) {
+        setMobileMenuOpen(false);
       }
     };
-
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
@@ -27,29 +25,26 @@ const DashboardLayout = () => {
 
   if (!isAuthenticated) return <Navigate to="/login" replace />;
 
+  // Calculate margin based on sidebar state (desktop only)
+  const contentMargin = !isMobile ? (sidebarCollapsed ? 'ml-20' : 'ml-[280px]') : 'ml-0';
+
   return (
     <div className="min-h-screen bg-gray-50">
-
-      {/* ✅ SINGLE Sidebar (handles both desktop + mobile) */}
-      <Sidebar
-        collapsed={sidebarCollapsed}
-        setCollapsed={setSidebarCollapsed}
-        mobileOpen={isMobile ? mobileMenuOpen : false}
-        setMobileOpen={setMobileMenuOpen}
-      />
-
-      {/* Main Content */}
-      <div
-        className={`min-h-screen flex flex-col ${
-          !isMobile ? (sidebarCollapsed ? 'ml-20' : 'ml-[280px]') : ''
-        }`}
-      >
-        <TopBar
+      {/* Desktop Sidebar - ONLY on desktop */}
+      {!isMobile && (
+        <Sidebar collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed} />
+      )}
+      
+      {/* Mobile Menu - Dropdown */}
+      <MobileMenu isOpen={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} />
+      
+      {/* Main Content - margin adjusts with sidebar */}
+      <div className={`min-h-screen flex flex-col transition-all duration-300 ${contentMargin}`}>
+        <TopBar 
+          onMenuClick={() => setMobileMenuOpen(true)}
           sidebarCollapsed={sidebarCollapsed}
-          setSidebarCollapsed={setSidebarCollapsed}
-          setMobileSidebarOpen={setMobileMenuOpen}
+          isMobile={isMobile}
         />
-
         <main className="flex-1 bg-white">
           <Outlet />
         </main>

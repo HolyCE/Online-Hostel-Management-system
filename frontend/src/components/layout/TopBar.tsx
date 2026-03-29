@@ -9,19 +9,16 @@ import {
   LogOut,
   ChevronDown,
   Menu,
-  Home,
-  UserCircle,
-  Shield
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface TopBarProps {
+  onMenuClick: () => void;
   sidebarCollapsed?: boolean;
-  setSidebarCollapsed?: (collapsed: boolean) => void;
-  setMobileSidebarOpen?: (open: boolean) => void;
+  isMobile?: boolean;
 }
 
-const TopBar: React.FC<TopBarProps> = ({ setMobileSidebarOpen }) => {
+const TopBar: React.FC<TopBarProps> = ({ onMenuClick, sidebarCollapsed, isMobile = false }) => {
   const { user, logout, notifications, unreadCount, markNotificationRead, fetchNotifications } = useAuth();
   const navigate = useNavigate();
 
@@ -69,19 +66,27 @@ const TopBar: React.FC<TopBarProps> = ({ setMobileSidebarOpen }) => {
 
   return (
     <header className="h-20 bg-white border-b border-gray-200 sticky top-0 z-20 flex items-center justify-between px-4 md:px-6 shadow-sm">
-      
       {/* Left Section */}
       <div className="flex items-center gap-4">
+        {/* Hamburger Menu - Mobile Only */}
+        {isMobile && (
+          <button
+            onClick={onMenuClick}
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            <Menu className="w-5 h-5 text-gray-700" />
+          </button>
+        )}
 
-        {/* ✅ Mobile Hamburger */}
-        <button
-          onClick={() => setMobileSidebarOpen?.((prev) => !prev)}
-          className="md:hidden p-2 hover:bg-gray-100 rounded-lg"
-        >
-          <Menu className="w-5 h-5 text-gray-700" />
-        </button>
+        {/* Logo */}
+        {/* <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/dashboard')}>
+          <div className="w-8 h-8 rounded-lg bg-black flex items-center justify-center">
+            <span className="text-white font-bold text-sm">H</span>
+          </div>
+          <span className="text-lg font-bold text-black hidden sm:block">HostelHub</span>
+        </div> */}
 
-        {/* Search Bar */}
+        {/* Search Bar - Desktop Only */}
         <div className="hidden md:block relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
@@ -94,7 +99,7 @@ const TopBar: React.FC<TopBarProps> = ({ setMobileSidebarOpen }) => {
         </div>
       </div>
 
-      {/* Right Section (UNCHANGED) */}
+      {/* Right Section */}
       <div className="flex items-center gap-3">
         {/* Notifications */}
         <div className="relative" ref={notificationRef}>
@@ -145,18 +150,14 @@ const TopBar: React.FC<TopBarProps> = ({ setMobileSidebarOpen }) => {
           </AnimatePresence>
         </div>
 
-        {/* User Menu - Redesigned Profile Button */}
+        {/* User Menu */}
         <div className="relative" ref={userMenuRef}>
           <button
             onClick={() => setShowUserMenu(!showUserMenu)}
-            className="flex items-center gap-3 p-1.5 hover:bg-gray-100 rounded-xl transition-colors"
+            className="flex items-center gap-2 p-1 hover:bg-gray-100 rounded-lg transition-colors"
           >
-            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-gray-700 to-black flex items-center justify-center text-white font-semibold text-sm shadow-sm">
+            <div className="w-9 h-9 rounded-full bg-black flex items-center justify-center text-white font-semibold text-sm">
               {user?.name ? getInitials(user.name) : 'U'}
-            </div>
-            <div className="hidden md:block text-left">
-              <p className="text-sm font-medium text-black">{user?.name?.split(' ')[0] || 'User'}</p>
-              <p className="text-xs text-gray-500 capitalize">{user?.role}</p>
             </div>
             <ChevronDown className="w-4 h-4 text-gray-500 hidden md:block" />
           </button>
@@ -167,81 +168,45 @@ const TopBar: React.FC<TopBarProps> = ({ setMobileSidebarOpen }) => {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 10 }}
-                className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden z-50"
+                className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden z-50"
               >
-                {/* User Header */}
-                <div className="p-4 border-b border-gray-200 bg-gray-50">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-gray-700 to-black flex items-center justify-center text-white font-bold text-lg">
-                      {user?.name ? getInitials(user.name) : 'U'}
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-black">{user?.name}</p>
-                      <p className="text-xs text-gray-500 capitalize">{user?.role}</p>
-                      <p className="text-xs text-gray-400 mt-0.5">{user?.email}</p>
-                    </div>
-                  </div>
+                <div className="p-3 border-b border-gray-200">
+                  <p className="text-sm font-medium text-black">{user?.name}</p>
+                  <p className="text-xs text-gray-500 capitalize">{user?.role}</p>
                 </div>
-                
-                {/* Menu Items */}
-                <div className="py-2">
+                <button
+                  onClick={() => {
+                    if (user?.role === 'admin') {
+                      navigate('/dashboard/admin/settings');
+                    } else {
+                      navigate('/dashboard/profile');
+                    }
+                    setShowUserMenu(false);
+                  }}
+                  className="w-full flex items-center gap-2 px-4 py-3 text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  <User className="w-4 h-4" /> Profile
+                </button>
+                {user?.role !== 'admin' && (
                   <button
                     onClick={() => {
-                      if (user?.role === 'admin') {
-                        navigate('/dashboard/admin/overview');
-                      } else {
-                        navigate('/dashboard');
-                      }
+                      navigate('/dashboard/settings');
                       setShowUserMenu(false);
                     }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    className="w-full flex items-center gap-2 px-4 py-3 text-sm text-gray-700 hover:bg-gray-100"
                   >
-                    <Home className="w-4 h-4" />
-                    Dashboard
+                    <Settings className="w-4 h-4" /> Settings
                   </button>
-                  
-                  <button
-                    onClick={() => {
-                      if (user?.role === 'admin') {
-                        navigate('/dashboard/admin/settings');
-                      } else {
-                        navigate('/dashboard/profile');
-                      }
-                      setShowUserMenu(false);
-                    }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                  >
-                    <UserCircle className="w-4 h-4" />
-                    {user?.role === 'admin' ? 'System Settings' : 'My Profile'}
-                  </button>
-                  
-                  {user?.role === 'admin' && (
-                    <button
-                      onClick={() => {
-                        navigate('/dashboard/admin/users');
-                        setShowUserMenu(false);
-                      }}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                    >
-                      <Shield className="w-4 h-4" />
-                      Manage Users
-                    </button>
-                  )}
-                </div>
-                
-                {/* Logout */}
-                <div className="border-t border-gray-200 py-2">
-                  <button
-                    onClick={() => {
-                      logout();
-                      setShowUserMenu(false);
-                    }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                  >
-                    <LogOut className="w-4 h-4" />
-                    Sign Out
-                  </button>
-                </div>
+                )}
+                <button
+                  onClick={() => {
+                    logout();
+                    setShowUserMenu(false);
+                  }}
+                  className="w-full flex items-center gap-2 px-4 py-3 text-sm text-red-600 hover:bg-red-50 border-t border-gray-200"
+                >
+                  <LogOut className="w-4 h-4" /> Sign Out
+                </button>
               </motion.div>
             )}
           </AnimatePresence>
