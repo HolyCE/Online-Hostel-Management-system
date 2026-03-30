@@ -3,7 +3,6 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { motion } from 'framer-motion';
 import { Mail, Lock, ArrowRight, Building2, Eye, EyeOff, Home } from 'lucide-react';
-import toast from 'react-hot-toast';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -19,15 +18,24 @@ const Login = () => {
     setError('');
     setLoading(true);
     
-    const success = await login(email, password);
-    setLoading(false);
+    console.log('🔐 Login attempt:', { email });
     
-    if (success) {
-      // Navigate to dashboard after successful login
-      navigate('/dashboard');
-    } else {
-      setError('Invalid email or password');
-      toast.error('Invalid email or password');
+    try {
+      const success = await login(email, password);
+      console.log('📡 Login result:', success);
+      
+      if (success) {
+        console.log('✅ Login successful, navigating to dashboard');
+        navigate('/dashboard');
+      } else {
+        console.log('❌ Login failed');
+        setError('Invalid email or password');
+      }
+    } catch (err) {
+      console.error('💥 Login error:', err);
+      setError('An error occurred. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
