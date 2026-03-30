@@ -116,11 +116,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = () => {
     console.log('🚪 logout called');
+    
+    // Use the global helper to set the logout flag
+    if (typeof window.logoutAndRedirect === 'function') {
+      window.logoutAndRedirect();
+    }
+    
+    // Clear state
     setUser(null);
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     toast.success('Logged out');
-    window.location.href = '/login';
+    
+    // Fallback redirect
+    setTimeout(() => {
+      window.location.href = '/login?logout=true';
+    }, 100);
   };
 
   return (

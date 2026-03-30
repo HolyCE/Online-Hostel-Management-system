@@ -1,74 +1,64 @@
-// Prevent redirect to login if we have a valid token
+// Prevent redirect to login only if we're NOT trying to log out
 (function() {
   console.log('🔒 Redirect protection active');
+  
+  // Check if we're intentionally logging out
+  const isLoggingOut = () => {
+    return sessionStorage.getItem('loggingOut') === 'true' || 
+           window.location.search.includes('logout=true');
+  };
   
   const token = localStorage.getItem('token');
   const user = localStorage.getItem('user');
   const currentPath = window.location.pathname;
   
-  // Helper to check if we're logging out
-  const isLoggingOut = () => {
-    return sessionStorage.getItem('loggingOut') === 'true' || 
-           document.body.getAttribute('data-logging-out') === 'true';
-  };
+  // Clear logout flag when on login page
+  if (currentPath === '/login') {
+    sessionStorage.removeItem('loggingOut');
+    console.log('🧹 Cleared logout flag');
+  }
   
-  // If we're on login page but have a token and not logging out, redirect to dashboard
+  // Only redirect to dashboard if:
+  // 1. We're on login page
+  // 2. We have a token
+  // 3. We're NOT logging out
   if (currentPath === '/login' && token && user && !isLoggingOut()) {
     console.log('✅ Token found, redirecting to dashboard');
     window.location.href = '/dashboard';
     return;
   }
   
-  // Clear logout flags after page loads
-  window.addEventListener('load', () => {
-    if (sessionStorage.getItem('loggingOut')) {
-      sessionStorage.removeItem('loggingOut');
-    }
-    document.body.removeAttribute('data-logging-out');
-  });
-  
   // Intercept navigation to login
   const originalPushState = history.pushState;
   const originalReplaceState = history.replaceState;
   
-  const checkAndBlock = (url) => {
-    if (isLoggingOut()) return false;
-    if (url && url.includes('/login') && token && user) {
-      console.log('🚫 Blocked navigation to login');
-      return true;
-    }
-    return false;
-  };
-  
   history.pushState = function(...args) {
     const url = args[2];
-    if (checkAndBlock(url)) return;
+    const isLoginUrl = url && url.includes('/login');
+    if (isLoginUrl && token && user && !isLoggingOut()) {
+      console.log('🚫 Blocked navigation to login');
+      return;
+    }
     return originalPushState.apply(this, args);
   };
   
   history.replaceState = function(...args) {
     const url = args[2];
-    if (checkAndBlock(url)) return;
+    const isLoginUrl = url && url.includes('/login');
+    if (isLoginUrl && token && user && !isLoggingOut()) {
+      console.log('🚫 Blocked navigation to login');
+      return;
+    }
     return originalReplaceState.apply(this, args);
   };
   
-  // Also intercept clicks on links
-  document.addEventListener('click', function(e) {
-    const link = e.target.closest('a');
-    if (link && link.getAttribute('href') === '/login' && token && user && !isLoggingOut()) {
-      e.preventDefault();
-      console.log('🚫 Blocked login link click');
-      window.location.href = '/dashboard';
-    }
-  });
-  
-  // Add a global logout helper
-  window.prepareLogout = function() {
+  // Add global logout helper
+  window.logoutAndRedirect = function() {
+    console.log('🚪 Setting logout flag');
     sessionStorage.setItem('loggingOut', 'true');
-    document.body.setAttribute('data-logging-out', 'true');
-    // Small delay to ensure flags are set before redirect
+    // Small delay to ensure flag is set
     setTimeout(() => {
-      window.location.href = '/login';
+      window.location.href = '/login?logout=true';
     }, 50);
   };
 })();
