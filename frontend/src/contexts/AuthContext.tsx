@@ -18,8 +18,8 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<boolean>;
-  register: (data: any) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  register: (data: any) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
 }
 
@@ -40,14 +40,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const token = localStorage.getItem('token');
       const storedUser = localStorage.getItem('user');
       
-      console.log('🔧 Restoring session...');
-      console.log('📦 Token exists:', !!token);
-      console.log('📦 Stored user exists:', !!storedUser);
-      
       if (token && storedUser) {
         try {
           const parsedUser = JSON.parse(storedUser);
-          console.log('👤 Restored user:', parsedUser.name);
           setUser(parsedUser);
         } catch (e) {
           console.error('Failed to parse user:', e);
@@ -60,7 +55,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     restoreSession();
   }, []);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
       const response = await axios.post(`${API_URL}/auth/login`, { email, password });
       
@@ -68,40 +63,49 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const userData = response.data.user;
         const token = response.data.token;
         
-        console.log('✅ Login successful, setting user:', userData.name);
-        
         localStorage.setItem('token', token);
         localStorage.setItem('user', JSON.stringify(userData));
         setUser(userData);
         
         toast.success(`Welcome back, ${userData.name}!`);
-        return true;
+        return { success: true };
       }
       toast.error('Login failed');
-      return false;
+      return { success: false, error: 'Invalid credentials' };
     } catch (error: any) {
       console.error('Login error:', error);
-      toast.error(error.response?.data?.message || 'Login failed');
-      return false;
+      const errorMsg = error.response?.data?.message || 'Login failed';
+      toast.error(errorMsg);
+      return { success: false, error: errorMsg };
     }
   };
 
-  const register = async (data: any): Promise<boolean> => {
+  const register = async (data: any): Promise<{ success: boolean; error?: string }> => {
     try {
-      const response = await axios.post(`${API_URL}/auth/register`, data);
+      const registerData = { ...data, role: 'student' };
+      const response = await axios.post(`${API_URL}/auth/register`, registerData);
+      
       if (response.data.success) {
         const userData = response.data.user;
-        setUser(userData);
-        localStorage.setItem('token', response.data.token);
+        const token = response.data.token;
+        
+        localStorage.setItem('token', token);
         localStorage.setItem('user', JSON.stringify(userData));
+        setUser(userData);
+        
         toast.success('Account created successfully!');
-        return true;
+        return { success: true };
       }
-      toast.error('Registration failed');
-      return false;
+      
+      // Registration failed - server returned success: false
+      const errorMsg = response.data.message || 'Registration failed. Email or matric number may already exist.';
+      toast.error(errorMsg);
+      return { success: false, error: errorMsg };
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Registration failed');
-      return false;
+      console.error('Registration error:', error);
+      const errorMsg = error.response?.data?.message || 'Registration failed. Please try again.';
+      toast.error(errorMsg);
+      return { success: false, error: errorMsg };
     }
   };
 
