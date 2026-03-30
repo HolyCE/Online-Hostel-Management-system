@@ -21,8 +21,12 @@ const Login = () => {
     const success = await login(email, password);
     
     if (success) {
-      // Use React Router navigation instead of full refresh
-      navigate('/dashboard');
+      // Small delay to ensure token is saved before navigation
+      setTimeout(() => {
+        console.log('Navigating to dashboard...');
+        console.log('Token exists:', !!localStorage.getItem('token'));
+        navigate('/dashboard');
+      }, 100);
     } else {
       setError('Invalid email or password');
       toast.error('Invalid email or password');
