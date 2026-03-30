@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
@@ -27,21 +27,18 @@ export const useAuth = () => {
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-
-  useEffect(() => {
-    // Load user from storage on startup
-    const token = localStorage.getItem('token');
+  const [user, setUser] = useState<User | null>(() => {
+    // Try to load user from localStorage on initial render
     const storedUser = localStorage.getItem('user');
-    
-    if (token && storedUser) {
+    if (storedUser) {
       try {
-        setUser(JSON.parse(storedUser));
+        return JSON.parse(storedUser);
       } catch (e) {
-        console.error('Failed to parse user');
+        return null;
       }
     }
-  }, []);
+    return null;
+  });
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {

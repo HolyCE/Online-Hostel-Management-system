@@ -29,39 +29,14 @@ import AdminSettings from './pages/admin/AdminSettings';
 
 import './index.css';
 
-// Loading component
-const LoadingScreen = () => (
-  <div className="flex items-center justify-center h-screen bg-white">
-    <div className="text-center">
-      <div className="w-16 h-16 border-4 border-black border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-      <p className="text-gray-600">Loading your session...</p>
-    </div>
-  </div>
-);
-
-// Protected Route Component with loading state
-const ProtectedRoute: React.FC<{
-  children: React.ReactNode;
-  requiredRole?: 'student' | 'admin';
-}> = ({ children, requiredRole }) => {
-  const { user, loading } = useAuth();
-
-  // Show loading screen while checking authentication
-  if (loading) {
-    return <LoadingScreen />;
-  }
-
-  if (!user) {
+// Simple Protected Route
+const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const token = localStorage.getItem('token');
+  
+  if (!token) {
     return <Navigate to="/login" replace />;
   }
-
-  if (requiredRole && user.role !== requiredRole) {
-    if (user.role === 'admin') {
-      return <Navigate to="/dashboard/admin/overview" replace />;
-    }
-    return <Navigate to="/dashboard" replace />;
-  }
-
+  
   return <>{children}</>;
 };
 
@@ -79,9 +54,9 @@ function App() {
             
             {/* Student Dashboard Routes */}
             <Route
-              path="/dashboard"
+              path="/dashboard/*"
               element={
-                <ProtectedRoute requiredRole="student">
+                <ProtectedRoute>
                   <DashboardLayout />
                 </ProtectedRoute>
               }
@@ -95,9 +70,9 @@ function App() {
             
             {/* Admin Dashboard Routes */}
             <Route
-              path="/dashboard/admin"
+              path="/dashboard/admin/*"
               element={
-                <ProtectedRoute requiredRole="admin">
+                <ProtectedRoute>
                   <DashboardLayout />
                 </ProtectedRoute>
               }
