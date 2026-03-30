@@ -62,13 +62,28 @@ const HallSelector: React.FC<HallSelectorProps> = ({ halls, selectedHall, onSele
                 : 'border-gray-200 bg-white hover:border-gray-300'
             }`}
           >
-            <div className="relative h-40 bg-gradient-to-br from-gray-800 to-gray-700 flex items-center justify-center">
-              <Building2 className="w-16 h-16 text-gray-500" />
+            {/* Hall Image */}
+            <div className="relative h-48 bg-gray-200 overflow-hidden">
+              {hall.images && hall.images[0] ? (
+                <img 
+                  src={hall.images[0]} 
+                  alt={hall.name}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.src = '';
+                    e.currentTarget.className = 'w-full h-full bg-gradient-to-br from-gray-800 to-gray-700 flex items-center justify-center';
+                  }}
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-700 flex items-center justify-center">
+                  <Building2 className="w-16 h-16 text-gray-500" />
+                </div>
+              )}
               <div className="absolute top-3 right-3">
                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                   hall.gender === 'male' ? 'bg-blue-100 text-blue-700' : 'bg-pink-100 text-pink-700'
                 }`}>
-                  {hall.gender === 'male' ? 'Men\'s Hall' : 'Women\'s Hall'}
+                  {hall.gender === 'male' ? "Men's Hall" : "Women's Hall"}
                 </span>
               </div>
             </div>
@@ -109,3 +124,4 @@ const HallSelector: React.FC<HallSelectorProps> = ({ halls, selectedHall, onSele
 };
 
 export default HallSelector;
+ 
