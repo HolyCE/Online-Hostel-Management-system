@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { motion } from 'framer-motion';
 import { User, Mail, Lock, Phone, BookOpen, ArrowRight, Building2, Eye, EyeOff, Home } from 'lucide-react';
+import { sendWelcomeEmail } from '../services/emailService';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -37,10 +38,7 @@ const Register = () => {
     
     setLoading(true);
     
-    const success = await register({
-    if (success) {
-      sendWelcomeEmail(formData.name, formData.email, formData.password);
-    }
+    const result = await register({
       name: formData.name,
       email: formData.email,
       password: formData.password,
@@ -52,10 +50,11 @@ const Register = () => {
     
     setLoading(false);
     
-    if (success) {
+    if (result.success) {
+      sendWelcomeEmail(formData.name, formData.email, formData.password);
       navigate('/dashboard');
     } else {
-      setError('Registration failed. Email or matric number may already exist.');
+      setError(result.error || 'Registration failed. Email or matric number may already exist.');
     }
   };
 
