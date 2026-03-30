@@ -38,100 +38,65 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    console.log('🔧 AuthProvider mounted');
     const token = localStorage.getItem('token');
     const storedUser = localStorage.getItem('user');
-    
-    console.log('📦 Token exists:', !!token);
-    console.log('📦 Stored user exists:', !!storedUser);
     
     if (token && storedUser) {
       try {
         const parsedUser = JSON.parse(storedUser);
-        console.log('👤 Restored user from storage:', parsedUser.name);
         setUser(parsedUser);
       } catch (e) {
-        console.error('❌ Failed to parse user:', e);
+        console.error('Failed to parse user');
         localStorage.removeItem('user');
       }
-    } else {
-      console.log('⚠️ No stored session found');
     }
     setLoading(false);
-    console.log('🏁 AuthProvider ready, user:', user?.name || 'none');
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    console.log('🔐 login function called with:', email);
-    
     try {
-      console.log('📡 Sending request to:', `${API_URL}/auth/login`);
       const response = await axios.post(`${API_URL}/auth/login`, { email, password });
-      console.log('📥 Response received:', response.status, response.data.success);
-      
       if (response.data.success) {
-        console.log('✅ Login successful, user:', response.data.user.name);
         setUser(response.data.user);
         localStorage.setItem('token', response.data.token);
         localStorage.setItem('user', JSON.stringify(response.data.user));
         toast.success(`Welcome back, ${response.data.user.name}!`);
         return true;
       }
-      console.log('❌ Login failed - server returned success: false');
       toast.error('Login failed');
       return false;
     } catch (error: any) {
-      console.error('💥 Login error:', error);
-      console.error('Error details:', error.response?.data || error.message);
       toast.error(error.response?.data?.message || 'Login failed');
       return false;
     }
   };
 
   const register = async (data: any): Promise<boolean> => {
-    console.log('📝 register function called with:', data.email);
-    
     try {
       const registerData = { ...data, role: 'student' };
       const response = await axios.post(`${API_URL}/auth/register`, registerData);
-      console.log('📥 Register response:', response.status, response.data.success);
-      
       if (response.data.success) {
-        console.log('✅ Registration successful, user:', response.data.user.name);
         setUser(response.data.user);
         localStorage.setItem('token', response.data.token);
         localStorage.setItem('user', JSON.stringify(response.data.user));
         toast.success('Account created successfully!');
         return true;
       }
-      console.log('❌ Registration failed');
       toast.error('Registration failed');
       return false;
     } catch (error: any) {
-      console.error('💥 Registration error:', error);
       toast.error(error.response?.data?.message || 'Registration failed');
       return false;
     }
   };
 
   const logout = () => {
-    console.log('🚪 logout called');
-    
-    // Use the global helper to set the logout flag
-    if (typeof window.logoutAndRedirect === 'function') {
-      window.logoutAndRedirect();
-    }
-    
-    // Clear state
     setUser(null);
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     toast.success('Logged out');
-    
-    // Fallback redirect
-    setTimeout(() => {
-      window.location.href = '/login?logout=true';
-    }, 100);
+    // Simple redirect - no flags
+    window.location.href = '/login';
   };
 
   return (
