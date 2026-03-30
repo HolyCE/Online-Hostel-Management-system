@@ -24,6 +24,8 @@ const Login = () => {
       
       if (success) {
         toast.success('Login successful!');
+        // Set flag to prevent redirect loop
+        sessionStorage.setItem('justLoggedIn', 'true');
         // Navigate to dashboard
         window.location.href = '/dashboard';
       } else {
