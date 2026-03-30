@@ -57,10 +57,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const response = await axios.post(`${API_URL}/auth/login`, { email, password });
       if (response.data.success) {
-        setUser(response.data.user);
+        const userData = response.data.user;
+        setUser(userData);
         localStorage.setItem('token', response.data.token);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
-        toast.success(`Welcome back, ${response.data.user.name}!`);
+        localStorage.setItem('user', JSON.stringify(userData));
+        toast.success(`Welcome back, ${userData.name}!`);
         return true;
       }
       toast.error('Login failed');
@@ -76,9 +77,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const registerData = { ...data, role: 'student' };
       const response = await axios.post(`${API_URL}/auth/register`, registerData);
       if (response.data.success) {
-        setUser(response.data.user);
+        const userData = response.data.user;
+        setUser(userData);
         localStorage.setItem('token', response.data.token);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
+        localStorage.setItem('user', JSON.stringify(userData));
         toast.success('Account created successfully!');
         return true;
       }
@@ -95,7 +97,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     toast.success('Logged out');
-    // Simple redirect - no flags
     window.location.href = '/login';
   };
 
