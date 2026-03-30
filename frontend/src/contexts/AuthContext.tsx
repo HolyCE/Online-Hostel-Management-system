@@ -16,6 +16,7 @@ interface User {
 
 interface AuthContextType {
   user: User | null;
+  loading: boolean;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<boolean>;
   register: (data: any) => Promise<boolean>;
@@ -32,26 +33,31 @@ export const useAuth = () => {
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Load user from localStorage on mount
-    const token = localStorage.getItem('token');
-    const storedUser = localStorage.getItem('user');
-    
-    console.log('🔧 AuthProvider mounted');
-    console.log('📦 Token exists:', !!token);
-    console.log('📦 Stored user exists:', !!storedUser);
-    
-    if (token && storedUser) {
-      try {
-        const parsedUser = JSON.parse(storedUser);
-        console.log('👤 Restored user:', parsedUser.name);
-        setUser(parsedUser);
-      } catch (e) {
-        console.error('Failed to parse user:', e);
-        localStorage.removeItem('user');
+    const restoreSession = async () => {
+      const token = localStorage.getItem('token');
+      const storedUser = localStorage.getItem('user');
+      
+      console.log('🔧 Restoring session...');
+      console.log('📦 Token exists:', !!token);
+      console.log('📦 Stored user exists:', !!storedUser);
+      
+      if (token && storedUser) {
+        try {
+          const parsedUser = JSON.parse(storedUser);
+          console.log('👤 Restored user:', parsedUser.name);
+          setUser(parsedUser);
+        } catch (e) {
+          console.error('Failed to parse user:', e);
+          localStorage.removeItem('user');
+        }
       }
-    }
+      setLoading(false);
+    };
+    
+    restoreSession();
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
@@ -64,11 +70,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         console.log('✅ Login successful, setting user:', userData.name);
         
-        // Save to localStorage
         localStorage.setItem('token', token);
         localStorage.setItem('user', JSON.stringify(userData));
-        
-        // Update state
         setUser(userData);
         
         toast.success(`Welcome back, ${userData.name}!`);
@@ -113,7 +116,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const isAuthenticated = !!user;
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, isAuthenticated, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );

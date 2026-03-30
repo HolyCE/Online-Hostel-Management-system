@@ -6,13 +6,11 @@ import TopBar from './TopBar';
 import MobileMenu from './MobileMenu';
 
 const DashboardLayout = () => {
-  const { isAuthenticated, user } = useAuth();
+  const { user, loading } = useAuth();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-
-  console.log('📱 DashboardLayout - isAuthenticated:', isAuthenticated);
-  console.log('📱 DashboardLayout - user:', user?.name);
+  const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -23,8 +21,26 @@ const DashboardLayout = () => {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  if (!isAuthenticated) {
-    console.log('❌ DashboardLayout - Not authenticated, redirecting to login');
+  // Wait for auth to be checked
+  useEffect(() => {
+    if (!loading) {
+      setAuthChecked(true);
+    }
+  }, [loading]);
+
+  // Show loading while checking authentication
+  if (loading || !authChecked) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-white">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-black border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading your session...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
     return <Navigate to="/login" replace />;
   }
 
