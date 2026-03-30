@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-const PAYSTACK_KEY = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || 'pk_test_7fab5c29d364e15f1bdb4c9d3e4b0027758440d9';
 
 interface PaystackPaymentProps {
   amount: number;
@@ -37,14 +36,6 @@ const PaystackPayment: React.FC<PaystackPaymentProps> = ({
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    console.log('🔍 Paystack Payment Component Mounted');
-    console.log('  Amount:', amount);
-    console.log('  Email:', email);
-    console.log('  Room:', roomNumber);
-    console.log('  Key exists:', !!PAYSTACK_KEY);
-  }, [amount, email, roomNumber]);
-
   const initializePayment = async () => {
     setLoading(true);
     setError(null);
@@ -52,16 +43,6 @@ const PaystackPayment: React.FC<PaystackPaymentProps> = ({
     try {
       const token = localStorage.getItem('token');
       const headers = { Authorization: `Bearer ${token}` };
-      
-      if (!amount || amount <= 0) {
-        throw new Error('Invalid payment amount');
-      }
-      
-      if (!email || !email.includes('@')) {
-        throw new Error('Invalid email address');
-      }
-      
-      console.log('📡 Calling backend to initialize payment...');
       
       const response = await axios.post(
         `${API_URL}/payments/initialize`,
@@ -75,46 +56,38 @@ const PaystackPayment: React.FC<PaystackPaymentProps> = ({
         { headers }
       );
 
-      console.log('✅ Backend response:', response.data);
-
       if (response.data.success && response.data.data.reference) {
-        const reference = response.data.data.reference;
-        const amountInKobo = Math.round(amount * 100);
+        const publicKey = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY;
         
-        console.log('💰 Paystack Setup:');
-        console.log('  Reference:', reference);
-        console.log('  Amount (₦):', amount);
-        console.log('  Amount (kobo):', amountInKobo);
-        console.log('  Email:', email);
+        if (!publicKey) {
+          setError('Payment configuration error. Please contact support.');
+          setLoading(false);
+          return;
+        }
         
-        if (typeof window.PaystackPop === 'undefined') {
-          throw new Error('Paystack script not loaded. Please refresh the page.');
+        if (!window.PaystackPop) {
+          setError('Paystack is not loaded. Please refresh the page.');
+          setLoading(false);
+          return;
         }
 
-        // Define callback functions first
         const callback = (responseData: any) => {
-          console.log('🎯 Paystack callback received:', responseData);
           if (responseData.status === 'success') {
             verifyPayment(responseData.reference);
-          } else {
-            toast.error('Payment was not completed');
-            setLoading(false);
           }
         };
 
         const closeCallback = () => {
-          console.log('🚪 Payment modal closed');
           setLoading(false);
           if (onClose) onClose();
         };
 
-        // Setup Paystack
         const handler = window.PaystackPop.setup({
-          key: PAYSTACK_KEY,
+          key: publicKey,
           email: email,
-          amount: amountInKobo,
+          amount: amount * 100, // Convert to kobo
           currency: 'NGN',
-          ref: reference,
+          ref: response.data.data.reference,
           metadata: {
             student_name: studentName,
             room_number: roomNumber,
@@ -126,13 +99,12 @@ const PaystackPayment: React.FC<PaystackPaymentProps> = ({
         
         handler.openIframe();
       } else {
-        throw new Error(response.data.message || 'Payment initialization failed');
+        setError('Failed to initialize payment. Please try again.');
+        setLoading(false);
       }
     } catch (err: any) {
-      console.error('❌ Error:', err);
-      const errorMsg = err.message || 'Failed to initialize payment';
-      setError(errorMsg);
-      toast.error(errorMsg);
+      console.error('Payment initialization error:', err);
+      setError(err.response?.data?.message || 'Failed to initialize payment. Please try again.');
       setLoading(false);
     }
   };
@@ -148,15 +120,15 @@ const PaystackPayment: React.FC<PaystackPaymentProps> = ({
       );
 
       if (response.data.success) {
-        toast.success('Payment successful! Room allocated.');
+        toast.success('Payment successful! Your room has been allocated.');
         if (onSuccess) onSuccess();
         navigate('/dashboard/payments');
       } else {
-        toast.error('Payment verification failed');
+        toast.error('Payment verification failed. Please contact support.');
       }
-    } catch (err: any) {
-      console.error('Verification error:', err);
-      toast.error('Payment verification failed');
+    } catch (err) {
+      console.error('Payment verification error:', err);
+      toast.error('Payment verification failed. Please contact support.');
     } finally {
       setLoading(false);
     }
@@ -169,8 +141,16 @@ const PaystackPayment: React.FC<PaystackPaymentProps> = ({
         disabled={loading}
         className="w-full px-6 py-3 bg-black text-white rounded-xl font-semibold hover:bg-gray-800 transition-colors disabled:opacity-50"
       >
-        {loading ? 'Processing...' : `Pay ₦${amount.toLocaleString()} with Paystack`}
+        {loading ? (
+          <div className="flex items-center justify-center gap-2">
+            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            Initializing...
+          </div>
+        ) : (
+          `Pay ₦${amount.toLocaleString()} with Paystack`
+        )}
       </button>
+      
       {error && (
         <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
           {error}
