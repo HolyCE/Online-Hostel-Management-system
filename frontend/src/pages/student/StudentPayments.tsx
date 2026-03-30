@@ -1,9 +1,8 @@
-import { sendPaymentConfirmationEmail } from "../../services/emailService";
 import { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { motion } from 'framer-motion';
-import { Download, Plus, CheckCircle, XCircle, Clock, Eye, Home, Users, DollarSign, ArrowLeft } from 'lucide-react';
+import { Download, Plus, CheckCircle, XCircle, Clock, Eye, Home, Users, DollarSign } from 'lucide-react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import PaystackPayment from '../../components/common/PaystackPayment';
@@ -23,22 +22,14 @@ interface Payment {
   createdAt: string;
 }
 
-interface SelectedRoom {
-  id: string;
-  roomNumber: string;
-  blockName: string;
-  price: number;
-  capacity: number;
-  duration?: string;
-}
-
 const StudentPayments = () => {
   const { user } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
-  const [selectedRoom, setSelectedRoom] = useState<SelectedRoom | null>(null);
+  const [selectedRoom, setSelectedRoom] = useState<any>(null);
   const [stats, setStats] = useState({
     totalPaid: 0,
     successfulPayments: 0,
@@ -46,38 +37,63 @@ const StudentPayments = () => {
   });
 
   useEffect(() => {
+    // Check URL for payment reference (return from Paystack)
+    const params = new URLSearchParams(window.location.search);
+    const reference = params.get('reference');
+    
+    if (reference) {
+      // Verify payment immediately
+      verifyPaymentOnReturn(reference);
+      // Clean URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+    
     // Check for selected room from navigation state
     if (location.state && (location.state as any).selectedRoom) {
       const room = (location.state as any).selectedRoom;
-      const duration = (location.state as any).selectedDuration || 'session';
-      const amount = (location.state as any).amount || room.price || room.basePrice;
-      setSelectedRoom({
-        id: room._id,
-        roomNumber: room.roomNumber,
-        blockName: room.blockName,
-        price: amount,
-        capacity: room.capacity,
-        duration: duration
-      });
+      setSelectedRoom(room);
       setShowPaymentForm(true);
-      toast.success(`Room ${room.roomNumber} selected! Ready to pay ₦${amount.toLocaleString()}`);
+      toast.success(`Room ${room.roomNumber} selected! Ready to pay.`);
     }
     
-    // Also check sessionStorage
-    const storedRoom = sessionStorage.getItem('selectedRoom');
+    // Also check localStorage
+    const storedRoom = localStorage.getItem('selectedRoom');
     if (storedRoom && !selectedRoom) {
       const room = JSON.parse(storedRoom);
       setSelectedRoom(room);
       setShowPaymentForm(true);
-      toast.success(`Room ${room.roomNumber} selected! Ready to pay ₦${room.price.toLocaleString()}`);
-      sessionStorage.removeItem('selectedRoom');
+      toast.success(`Room ${room.roomNumber} selected! Ready to pay.`);
+      localStorage.removeItem('selectedRoom');
     }
     
     fetchPayments();
   }, []);
 
+  const verifyPaymentOnReturn = async (reference: string) => {
+    const loadingToast = toast.loading('Verifying payment...');
+    try {
+      const token = localStorage.getItem('token');
+      const headers = { Authorization: `Bearer ${token}` };
+      
+      const response = await axios.get(`${API_URL}/payments/verify/${reference}`, { headers });
+      
+      if (response.data.success) {
+        toast.dismiss(loadingToast);
+        toast.success('🎉 Payment successful! Your room has been allocated.');
+        fetchPayments();
+        navigate('/dashboard');
+      } else {
+        toast.dismiss(loadingToast);
+        toast.error('Payment verification failed. Please contact support.');
+      }
+    } catch (error) {
+      console.error('Verification error:', error);
+      toast.dismiss(loadingToast);
+      toast.error('Payment verification failed. Please contact support.');
+    }
+  };
+
   const fetchPayments = async () => {
-    const loadingToast = toast.loading('Loading payment history...');
     try {
       const token = localStorage.getItem('token');
       const headers = { Authorization: `Bearer ${token}` };
@@ -94,30 +110,22 @@ const StudentPayments = () => {
         successfulPayments: successful.length,
         pendingPayments: pending.length
       });
-      toast.dismiss(loadingToast);
-      if (data.length > 0) {
-        toast.success(`Found ${data.length} payment records`);
-      }
     } catch (error: any) {
       console.error('Error fetching payments:', error);
-      toast.dismiss(loadingToast);
-      toast.error(error.response?.data?.message || 'Failed to load payment history');
     } finally {
       setLoading(false);
     }
   };
 
   const handlePaymentSuccess = () => {
-    toast.success('🎉 Payment successful! Your room has been allocated. Check your dashboard!');
+    toast.success('Payment successful! Your room has been allocated.');
     setShowPaymentForm(false);
     setSelectedRoom(null);
     fetchPayments();
+    navigate('/dashboard');
   };
 
-  const handlePaymentError = (error: string) => {
-    toast.error(error || 'Payment failed. Please try again.');
-  };
-
+  // ... rest of the component remains the same
   const getStatusIcon = (status: string) => {
     switch(status) {
       case 'success': return <CheckCircle className="w-4 h-4 text-green-600" />;
@@ -164,20 +172,7 @@ const StudentPayments = () => {
           <p className="text-gray-600">{payments.length} payment records</p>
         </div>
         <button 
-          onClick={() => {
-            if (!selectedRoom) {
-              toast('Please select a room from the Rooms page first', {
-                duration: 5000,
-                icon: '🏠',
-                style: {
-                  background: '#f3f4f6',
-                  color: '#000000',
-                },
-              });
-            } else {
-              setShowPaymentForm(true);
-            }
-          }}
+          onClick={() => setShowPaymentForm(true)}
           className="px-4 py-2 bg-black text-white rounded-lg flex items-center gap-2 hover:bg-gray-800 transition-all"
         >
           <Plus className="w-4 h-4" /> Make Payment
@@ -212,13 +207,6 @@ const StudentPayments = () => {
                   onClick={() => {
                     setShowPaymentForm(false);
                     setSelectedRoom(null);
-                    toast('Payment cancelled', {
-                      icon: '❌',
-                      style: {
-                        background: '#f3f4f6',
-                        color: '#000000',
-                      },
-                    });
                   }}
                   className="p-1 hover:bg-gray-100 rounded-full"
                 >
@@ -229,18 +217,15 @@ const StudentPayments = () => {
             
             <div className="p-6 space-y-6">
               {!selectedRoom ? (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Select Room</label>
-                  <div className="text-gray-600 text-center py-8">
-                    <Home className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                    <p>Please select a room from the Rooms page first</p>
-                    <button 
-                      onClick={() => window.location.href = '/dashboard/rooms'}
-                      className="mt-4 px-4 py-2 bg-black text-white rounded-lg text-sm hover:bg-gray-800"
-                    >
-                      Browse Rooms
-                    </button>
-                  </div>
+                <div className="text-center py-8">
+                  <Home className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                  <p className="text-gray-600">Please select a room from the Rooms page first</p>
+                  <button 
+                    onClick={() => navigate('/dashboard/rooms')}
+                    className="mt-4 px-4 py-2 bg-black text-white rounded-lg text-sm hover:bg-gray-800"
+                  >
+                    Browse Rooms
+                  </button>
                 </div>
               ) : (
                 <>
@@ -255,16 +240,6 @@ const StudentPayments = () => {
                         <span className="text-gray-600">Block:</span>
                         <span className="font-medium text-black">{selectedRoom.blockName}</span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Capacity:</span>
-                        <span className="font-medium text-black">{selectedRoom.capacity} persons</span>
-                      </div>
-                      {selectedRoom.duration && (
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Duration:</span>
-                          <span className="font-medium text-black capitalize">{selectedRoom.duration}</span>
-                        </div>
-                      )}
                       <div className="flex justify-between border-t border-gray-200 pt-2 mt-2">
                         <span className="text-gray-600 font-semibold">Amount:</span>
                         <span className="text-xl font-bold text-black">₦{selectedRoom.price.toLocaleString()}</span>
@@ -280,16 +255,7 @@ const StudentPayments = () => {
                     roomId={selectedRoom.id}
                     duration={selectedRoom.duration || 'session'}
                     onSuccess={handlePaymentSuccess}
-                    onClose={() => {
-                      setShowPaymentForm(false);
-                      toast('Payment window closed', {
-                        icon: '🚪',
-                        style: {
-                          background: '#f3f4f6',
-                          color: '#000000',
-                        },
-                      });
-                    }}
+                    onClose={() => setShowPaymentForm(false)}
                   />
                 </>
               )}
@@ -303,86 +269,43 @@ const StudentPayments = () => {
         animate={{ opacity: 1, y: 0 }} 
         className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200"
       >
-        {payments.length === 0 ? (
-          <div className="p-12 text-center">
-            <DollarSign className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600 mb-4">No payment records found</p>
-            <button 
-              onClick={() => {
-                toast('Please select a room from the Rooms page first', {
-                  icon: '🏠',
-                  style: {
-                    background: '#f3f4f6',
-                    color: '#000000',
-                  },
-                });
-                window.location.href = '/dashboard/rooms';
-              }}
-              className="px-4 py-2 bg-black text-white rounded-lg text-sm hover:bg-gray-800"
-            >
-              Make your first payment
-            </button>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
-                <tr>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-black">Reference</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-black">Amount</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-black">Status</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-black">Date</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-black">Method</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-black">Session</th>
-                  <th className="px-6 py-4"></th>
-                 </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {payments.map(payment => (
-                  <tr key={payment._id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4">
-                      <span className="font-mono text-sm font-medium text-black">
-                        {payment.reference?.slice(0, 12)}...
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm font-semibold text-black">
-                      ₦{payment.amount.toLocaleString()}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium ${getStatusColor(payment.status)}`}>
-                        {getStatusIcon(payment.status)}
-                        {payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
-                      {formatDate(payment.paymentDate || payment.createdAt)}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-600 capitalize">
-                      {payment.paymentMethod || '—'}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
-                      {payment.sessionYear} - {payment.semester}
-                    </td>
-                    <td className="px-6 py-4">
-                      <button 
-                        onClick={() => toast(`Payment reference: ${payment.reference}`, {
-                          icon: '📄',
-                          style: {
-                            background: '#f3f4f6',
-                            color: '#000000',
-                          },
-                        })}
-                        className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
-                      >
-                        <Eye className="w-4 h-4 text-gray-600" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50 border-b border-gray-200">
+              <tr>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-black">Reference</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-black">Amount</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-black">Status</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-black">Date</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-black">Method</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-black">Session</th>
+                <th className="px-6 py-4"></th>
+               </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {payments.map(payment => (
+                <tr key={payment._id} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-6 py-4 font-mono text-sm font-medium text-black">{payment.reference?.slice(0, 12)}...</td>
+                  <td className="px-6 py-4 text-sm font-semibold text-black">₦{payment.amount.toLocaleString()}</td>
+                  <td className="px-6 py-4">
+                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium ${getStatusColor(payment.status)}`}>
+                      {getStatusIcon(payment.status)}
+                      {payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-600">{formatDate(payment.paymentDate || payment.createdAt)}</td>
+                  <td className="px-6 py-4 text-sm text-gray-600 capitalize">{payment.paymentMethod || '—'}</td>
+                  <td className="px-6 py-4 text-sm text-gray-600">{payment.sessionYear} - {payment.semester}</td>
+                  <td className="px-6 py-4">
+                    <button className="p-1 hover:bg-gray-100 rounded-lg transition-colors">
+                      <Eye className="w-4 h-4 text-gray-600" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </motion.div>
     </div>
   );

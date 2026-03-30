@@ -83,48 +83,57 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
-  const checkToken = useCallback(async (token: string) => {
+  const restoreSession = useCallback(async () => {
+    const token = localStorage.getItem('token');
+    const storedUser = localStorage.getItem('user');
+    
+    if (!token) {
+      setLoading(false);
+      return false;
+    }
+    
+    // If we have stored user data, set it immediately
+    if (storedUser) {
+      try {
+        const userData = JSON.parse(storedUser);
+        setUser(userData);
+      } catch (error) {
+        console.error('Error parsing stored user:', error);
+      }
+    }
+    
+    // Verify token with backend
     try {
       const response = await axios.get(`${API_URL}/auth/me`, {
         headers: { Authorization: `Bearer ${token}` }
       });
+      
       if (response.data.success) {
         const userData = response.data.data;
         setUser(userData);
-        // Store user in localStorage
         localStorage.setItem('user', JSON.stringify(userData));
         await fetchNotifications();
+        setLoading(false);
         return true;
+      } else {
+        // Token invalid, clear storage
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        setUser(null);
+        setLoading(false);
+        return false;
       }
-      return false;
     } catch (error) {
-      console.error('Token validation failed:', error);
-      return false;
+      console.error('Session restore error:', error);
+      // Don't clear user on network error, keep stored data
+      setLoading(false);
+      return !!storedUser;
     }
   }, [fetchNotifications]);
 
   useEffect(() => {
-    const initAuth = async () => {
-      const token = localStorage.getItem('token');
-      const storedUser = localStorage.getItem('user');
-      
-      // If we have stored user data, use it immediately
-      if (storedUser) {
-        try {
-          const userData = JSON.parse(storedUser);
-          setUser(userData);
-        } catch (error) {
-          console.error('Error parsing stored user:', error);
-        }
-      }
-      
-      if (token) {
-        await checkToken(token);
-      }
-      setLoading(false);
-    };
-    initAuth();
-  }, [checkToken]);
+    restoreSession();
+  }, [restoreSession]);
 
   const login = useCallback(async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     const loadingToast = toast.loading('Logging in...');
