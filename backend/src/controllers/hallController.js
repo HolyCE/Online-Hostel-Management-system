@@ -1,4 +1,3 @@
-const mongoose = require('mongoose');
 const Hall = require('../models/Hall');
 const Room = require('../models/Room');
 
@@ -57,16 +56,9 @@ exports.getHallRooms = async (req, res) => {
   try {
     const { id } = req.params;
     
-    // Convert string ID to ObjectId
-    const hallObjectId = new mongoose.Types.ObjectId(id);
-    
-    console.log('Looking for rooms with hall ID:', hallObjectId);
-    
-    const rooms = await Room.find({ hall: hallObjectId })
+    const rooms = await Room.find({ hall: id })
       .populate('occupants', 'name email')
       .sort({ roomNumber: 1 });
-    
-    console.log(`Found ${rooms.length} rooms in hall`);
     
     res.json({
       success: true,
