@@ -8,18 +8,11 @@ interface User {
   id: string;
   name: string;
   email: string;
-  role: 'student' | 'admin';
-  matricNumber?: string;
-  phoneNumber?: string;
-  gender?: 'male' | 'female';
-  room?: any;
-  isActive: boolean;
-  createdAt: string;
+  role: string;
 }
 
 interface AuthContextType {
   user: User | null;
-  loading: boolean;
   login: (email: string, password: string) => Promise<boolean>;
   register: (data: any) => Promise<boolean>;
   logout: () => void;
@@ -35,22 +28,19 @@ export const useAuth = () => {
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Load user from storage on startup
     const token = localStorage.getItem('token');
     const storedUser = localStorage.getItem('user');
     
     if (token && storedUser) {
       try {
-        const parsedUser = JSON.parse(storedUser);
-        setUser(parsedUser);
+        setUser(JSON.parse(storedUser));
       } catch (e) {
         console.error('Failed to parse user');
-        localStorage.removeItem('user');
       }
     }
-    setLoading(false);
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
@@ -74,8 +64,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const register = async (data: any): Promise<boolean> => {
     try {
-      const registerData = { ...data, role: 'student' };
-      const response = await axios.post(`${API_URL}/auth/register`, registerData);
+      const response = await axios.post(`${API_URL}/auth/register`, data);
       if (response.data.success) {
         const userData = response.data.user;
         setUser(userData);
@@ -101,7 +90,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );

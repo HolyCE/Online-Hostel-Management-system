@@ -1,22 +1,9 @@
-// Simple redirect protection with login flag
+// Simple redirect - only redirect on login page if logged in
 (function() {
-  // Check if we just logged in
-  const justLoggedIn = sessionStorage.getItem('justLoggedIn') === 'true';
-  
   const token = localStorage.getItem('token');
-  const user = localStorage.getItem('user');
-  const currentPath = window.location.pathname;
+  const isLoginPage = window.location.pathname === '/login';
   
-  // If we just logged in, don't redirect
-  if (justLoggedIn) {
-    console.log('🎉 Just logged in, skipping redirect');
-    sessionStorage.removeItem('justLoggedIn');
-    return;
-  }
-  
-  // Only redirect if we're on login page and have a token
-  if (currentPath === '/login' && token && user) {
-    console.log('✅ Redirecting to dashboard');
+  if (isLoginPage && token) {
     window.location.href = '/dashboard';
   }
 })();

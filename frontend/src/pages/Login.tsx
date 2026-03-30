@@ -1,12 +1,10 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { motion } from 'framer-motion';
 import { Mail, Lock, ArrowRight, Building2, Eye, EyeOff, Home } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const Login = () => {
-  const navigate = useNavigate();
   const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -19,25 +17,16 @@ const Login = () => {
     setError('');
     setLoading(true);
     
-    try {
-      const success = await login(email, password);
-      
-      if (success) {
-        toast.success('Login successful!');
-        // Set flag to prevent redirect loop
-        sessionStorage.setItem('justLoggedIn', 'true');
-        // Navigate to dashboard
-        window.location.href = '/dashboard';
-      } else {
-        setError('Invalid email or password');
-        toast.error('Invalid email or password');
-      }
-    } catch (err) {
-      setError('An error occurred. Please try again.');
-      toast.error('Login failed');
-    } finally {
-      setLoading(false);
+    const success = await login(email, password);
+    
+    if (success) {
+      // Simple redirect - no complexity
+      window.location.href = '/dashboard';
+    } else {
+      setError('Invalid email or password');
+      toast.error('Invalid email or password');
     }
+    setLoading(false);
   };
 
   return (
@@ -50,12 +39,7 @@ const Login = () => {
         <span className="text-sm text-gray-600">Back to Home</span>
       </Link>
       
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="w-full max-w-md"
-      >
+      <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-black shadow-lg mb-4">
             <Building2 className="w-8 h-8 text-white" />
@@ -141,7 +125,7 @@ const Login = () => {
             </p>
           </div>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 };
