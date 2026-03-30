@@ -4,8 +4,7 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-// Hardcoded Paystack test public key for testing
-const PAYSTACK_KEY = 'pk_test_7fab5c29d364e15f1bdb4c9d3e4b0027758440d9';
+const PAYSTACK_KEY = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || 'pk_test_7fab5c29d364e15f1bdb4c9d3e4b0027758440d9';
 
 interface PaystackPaymentProps {
   amount: number;
@@ -39,14 +38,12 @@ const PaystackPayment: React.FC<PaystackPaymentProps> = ({
   const navigate = useNavigate();
 
   useEffect(() => {
-    console.log('=== Paystack Payment Debug Info ===');
-    console.log('Amount (naira):', amount);
-    console.log('Amount (kobo):', amount * 100);
-    console.log('Email:', email);
-    console.log('Room:', roomNumber);
-    console.log('Student:', studentName);
-    console.log('===================================');
-  }, [amount, email, roomNumber, studentName]);
+    console.log('🔍 Paystack Payment Component Mounted');
+    console.log('  Amount:', amount);
+    console.log('  Email:', email);
+    console.log('  Room:', roomNumber);
+    console.log('  Key exists:', !!PAYSTACK_KEY);
+  }, [amount, email, roomNumber]);
 
   const initializePayment = async () => {
     setLoading(true);
@@ -56,8 +53,15 @@ const PaystackPayment: React.FC<PaystackPaymentProps> = ({
       const token = localStorage.getItem('token');
       const headers = { Authorization: `Bearer ${token}` };
       
-      console.log('Calling backend to initialize payment...');
-      console.log('Payload:', { amount, roomId, roomNumber, studentName, duration });
+      if (!amount || amount <= 0) {
+        throw new Error('Invalid payment amount');
+      }
+      
+      if (!email || !email.includes('@')) {
+        throw new Error('Invalid email address');
+      }
+      
+      console.log('📡 Calling backend to initialize payment...');
       
       const response = await axios.post(
         `${API_URL}/payments/initialize`,
@@ -71,102 +75,62 @@ const PaystackPayment: React.FC<PaystackPaymentProps> = ({
         { headers }
       );
 
-      console.log('Backend response:', response.data);
+      console.log('✅ Backend response:', response.data);
 
       if (response.data.success && response.data.data.reference) {
-        const publicKey = PAYSTACK_KEY;
         const reference = response.data.data.reference;
         const amountInKobo = Math.round(amount * 100);
         
-        console.log('=== Paystack Setup ===');
-        console.log('Public Key:', publicKey);
-        console.log('Reference:', reference);
-        console.log('Amount in kobo:', amountInKobo);
-        console.log('Email:', email);
-        console.log('=====================');
-        
-        if (!publicKey) {
-          const errorMsg = 'Paystack public key is missing.';
-          setError(errorMsg);
-          toast.error(errorMsg);
-          setLoading(false);
-          return;
-        }
+        console.log('💰 Paystack Setup:');
+        console.log('  Reference:', reference);
+        console.log('  Amount (₦):', amount);
+        console.log('  Amount (kobo):', amountInKobo);
+        console.log('  Email:', email);
         
         if (typeof window.PaystackPop === 'undefined') {
-          const errorMsg = 'Paystack script not loaded. Please refresh the page.';
-          setError(errorMsg);
-          toast.error(errorMsg);
-          setLoading(false);
-          return;
+          throw new Error('Paystack script not loaded. Please refresh the page.');
         }
 
-        const callback = async (responseData: any) => {
-          console.log('Paystack callback received:', responseData);
+        // Define callback functions first
+        const callback = (responseData: any) => {
+          console.log('🎯 Paystack callback received:', responseData);
           if (responseData.status === 'success') {
-            await verifyPayment(responseData.reference);
+            verifyPayment(responseData.reference);
           } else {
-            console.log('Payment was not successful:', responseData);
-            setError('Payment was not completed successfully');
-            toast.error('Payment was not completed successfully');
+            toast.error('Payment was not completed');
             setLoading(false);
           }
         };
 
         const closeCallback = () => {
-          console.log('Payment modal closed by user');
+          console.log('🚪 Payment modal closed');
           setLoading(false);
           if (onClose) onClose();
         };
 
-        try {
-          const handler = window.PaystackPop.setup({
-            key: publicKey,
-            email: email,
-            amount: amountInKobo,
-            currency: 'NGN',
-            ref: reference,
-            metadata: {
-              student_name: studentName,
-              room_number: roomNumber,
-              duration: duration,
-              custom_fields: [
-                {
-                  display_name: "Student Name",
-                  variable_name: "student_name",
-                  value: studentName
-                },
-                {
-                  display_name: "Room Number",
-                  variable_name: "room_number",
-                  value: roomNumber
-                },
-                {
-                  display_name: "Duration",
-                  variable_name: "duration",
-                  value: duration
-                }
-              ]
-            },
-            callback: callback,
-            onClose: closeCallback
-          });
-          
-          handler.openIframe();
-        } catch (paystackError: any) {
-          console.error('Paystack setup error:', paystackError);
-          setError(`Paystack error: ${paystackError.message || 'Failed to open payment window'}`);
-          toast.error('Failed to open payment window');
-          setLoading(false);
-        }
+        // Setup Paystack
+        const handler = window.PaystackPop.setup({
+          key: PAYSTACK_KEY,
+          email: email,
+          amount: amountInKobo,
+          currency: 'NGN',
+          ref: reference,
+          metadata: {
+            student_name: studentName,
+            room_number: roomNumber,
+            duration: duration
+          },
+          callback: callback,
+          onClose: closeCallback
+        });
+        
+        handler.openIframe();
       } else {
-        setError(response.data.message || 'Failed to initialize payment. Please try again.');
-        toast.error(response.data.message || 'Failed to initialize payment. Please try again.');
-        setLoading(false);
+        throw new Error(response.data.message || 'Payment initialization failed');
       }
     } catch (err: any) {
-      console.error('Payment initialization error:', err);
-      const errorMsg = err.response?.data?.message || err.message || 'Failed to initialize payment. Please try again.';
+      console.error('❌ Error:', err);
+      const errorMsg = err.message || 'Failed to initialize payment';
       setError(errorMsg);
       toast.error(errorMsg);
       setLoading(false);
@@ -178,27 +142,21 @@ const PaystackPayment: React.FC<PaystackPaymentProps> = ({
       const token = localStorage.getItem('token');
       const headers = { Authorization: `Bearer ${token}` };
       
-      console.log('Verifying payment with reference:', reference);
-      
       const response = await axios.get(
         `${API_URL}/payments/verify/${reference}`,
         { headers }
       );
 
-      console.log('Payment verification response:', response.data);
-
       if (response.data.success) {
-        console.log('✅ Payment verified successfully!');
+        toast.success('Payment successful! Room allocated.');
         if (onSuccess) onSuccess();
-        toast.success('Payment successful! Your room has been allocated.');
         navigate('/dashboard/payments');
       } else {
-        console.log('❌ Payment verification failed:', response.data.message);
-        toast.error(`Payment verification failed: ${response.data.message || 'Please contact support'}`);
+        toast.error('Payment verification failed');
       }
     } catch (err: any) {
-      console.error('Payment verification error:', err);
-      toast.error(`Payment verification failed: ${err.response?.data?.message || err.message}`);
+      console.error('Verification error:', err);
+      toast.error('Payment verification failed');
     } finally {
       setLoading(false);
     }
@@ -209,18 +167,10 @@ const PaystackPayment: React.FC<PaystackPaymentProps> = ({
       <button
         onClick={initializePayment}
         disabled={loading}
-        className="w-full px-6 py-3 bg-black text-white rounded-xl font-semibold hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full px-6 py-3 bg-black text-white rounded-xl font-semibold hover:bg-gray-800 transition-colors disabled:opacity-50"
       >
-        {loading ? (
-          <div className="flex items-center justify-center gap-2">
-            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-            Initializing...
-          </div>
-        ) : (
-          `Pay ₦${amount.toLocaleString()} with Paystack`
-        )}
+        {loading ? 'Processing...' : `Pay ₦${amount.toLocaleString()} with Paystack`}
       </button>
-      
       {error && (
         <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
           {error}
