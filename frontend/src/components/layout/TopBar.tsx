@@ -3,9 +3,6 @@ import { useAuth } from '../../contexts/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, Search, User, Settings, LogOut, ChevronDown, Menu } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import toast from 'react-hot-toast';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 interface TopBarProps {
   onMenuClick: () => void;
@@ -59,23 +56,6 @@ const TopBar: React.FC<TopBarProps> = ({ onMenuClick, isMobile = false }) => {
       .slice(0, 2);
   };
 
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setSearchQuery(value);
-    
-    if (value.length >= 2) {
-      toast(`Searching for "${value}" - Results will appear soon`, {
-        icon: '🔍',
-        duration: 3000,
-      });
-    } else if (value.length > 0 && value.length < 2) {
-      toast.error('Please enter at least 2 characters to search', {
-        duration: 2000,
-        icon: '❓',
-      });
-    }
-  };
-
   return (
     <header className="h-20 bg-white border-b border-gray-200 sticky top-0 z-20 flex items-center justify-between px-4 md:px-6 shadow-sm">
       {/* Left Section */}
@@ -86,14 +66,14 @@ const TopBar: React.FC<TopBarProps> = ({ onMenuClick, isMobile = false }) => {
           </button>
         )}
         
-        {/* Search Bar - Desktop Only */}
+        {/* Search Bar - Desktop Only (placeholder, no functionality) */}
         <div className="hidden md:block relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
             type="text"
             value={searchQuery}
-            onChange={handleSearch}
-            placeholder="Search rooms, payments, tickets..."
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search..."
             className="w-80 pl-10 pr-4 py-2 rounded-xl border border-gray-300 bg-white text-black focus:outline-none focus:ring-2 focus:ring-gray-400"
           />
         </div>
