@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Mail, Lock, ArrowRight, Building2, Eye, EyeOff, Home } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const Login = () => {
+  const navigate = useNavigate();
   const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -17,26 +18,12 @@ const Login = () => {
     setError('');
     setLoading(true);
     
-    console.log('1. Login form submitted with:', email);
-    
     const success = await login(email, password);
     
-    console.log('2. Login result:', success);
-    
     if (success) {
-      console.log('3. Login successful, checking token...');
-      const token = localStorage.getItem('token');
-      console.log('4. Token exists?', !!token);
-      
-      if (token) {
-        console.log('5. Redirecting to dashboard...');
-        window.location.href = '/dashboard';
-      } else {
-        console.log('5. No token found!');
-        setError('Login succeeded but no token saved');
-      }
+      // Use React Router navigation instead of full refresh
+      navigate('/dashboard');
     } else {
-      console.log('3. Login failed');
       setError('Invalid email or password');
       toast.error('Invalid email or password');
     }

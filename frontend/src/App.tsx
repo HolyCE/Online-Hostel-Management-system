@@ -29,7 +29,7 @@ import AdminSettings from './pages/admin/AdminSettings';
 
 import './index.css';
 
-// Simple Protected Route
+// Simple Protected Route - just checks token
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const token = localStorage.getItem('token');
   
@@ -53,14 +53,11 @@ function App() {
             <Route path="/register" element={<Register />} />
             
             {/* Student Dashboard Routes */}
-            <Route
-              path="/dashboard/*"
-              element={
-                <ProtectedRoute>
-                  <DashboardLayout />
-                </ProtectedRoute>
-              }
-            >
+            <Route path="/dashboard" element={
+              <ProtectedRoute>
+                <DashboardLayout />
+              </ProtectedRoute>
+            }>
               <Route index element={<StudentOverview />} />
               <Route path="rooms" element={<StudentRooms />} />
               <Route path="payments" element={<StudentPayments />} />
@@ -69,14 +66,11 @@ function App() {
             </Route>
             
             {/* Admin Dashboard Routes */}
-            <Route
-              path="/dashboard/admin/*"
-              element={
-                <ProtectedRoute>
-                  <DashboardLayout />
-                </ProtectedRoute>
-              }
-            >
+            <Route path="/dashboard/admin" element={
+              <ProtectedRoute>
+                <DashboardLayout />
+              </ProtectedRoute>
+            }>
               <Route index element={<Navigate to="overview" replace />} />
               <Route path="overview" element={<AdminOverview />} />
               <Route path="rooms" element={<AdminRooms />} />
