@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
@@ -9,10 +9,14 @@ interface User {
   name: string;
   email: string;
   role: string;
+  matricNumber?: string;
+  phoneNumber?: string;
+  gender?: string;
 }
 
 interface AuthContextType {
   user: User | null;
+  isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<boolean>;
   register: (data: any) => Promise<boolean>;
   logout: () => void;
@@ -27,17 +31,28 @@ export const useAuth = () => {
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(() => {
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    // Load user from localStorage on mount
+    const token = localStorage.getItem('token');
     const storedUser = localStorage.getItem('user');
-    if (storedUser) {
+    
+    console.log('🔧 AuthProvider mounted');
+    console.log('📦 Token exists:', !!token);
+    console.log('📦 Stored user exists:', !!storedUser);
+    
+    if (token && storedUser) {
       try {
-        return JSON.parse(storedUser);
+        const parsedUser = JSON.parse(storedUser);
+        console.log('👤 Restored user:', parsedUser.name);
+        setUser(parsedUser);
       } catch (e) {
-        return null;
+        console.error('Failed to parse user:', e);
+        localStorage.removeItem('user');
       }
     }
-    return null;
-  });
+  }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
@@ -47,11 +62,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const userData = response.data.user;
         const token = response.data.token;
         
-        // Save to localStorage first
+        console.log('✅ Login successful, setting user:', userData.name);
+        
+        // Save to localStorage
         localStorage.setItem('token', token);
         localStorage.setItem('user', JSON.stringify(userData));
         
-        // Then update state
+        // Update state
         setUser(userData);
         
         toast.success(`Welcome back, ${userData.name}!`);
@@ -60,6 +77,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       toast.error('Login failed');
       return false;
     } catch (error: any) {
+      console.error('Login error:', error);
       toast.error(error.response?.data?.message || 'Login failed');
       return false;
     }
@@ -92,8 +110,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     window.location.href = '/login';
   };
 
+  const isAuthenticated = !!user;
+
   return (
-    <AuthContext.Provider value={{ user, login, register, logout }}>
+    <AuthContext.Provider value={{ user, isAuthenticated, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );

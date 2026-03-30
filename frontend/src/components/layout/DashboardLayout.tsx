@@ -6,12 +6,13 @@ import TopBar from './TopBar';
 import MobileMenu from './MobileMenu';
 
 const DashboardLayout = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
-  console.log('📱 DashboardLayout rendering, isAuthenticated:', isAuthenticated);
+  console.log('📱 DashboardLayout - isAuthenticated:', isAuthenticated);
+  console.log('📱 DashboardLayout - user:', user?.name);
 
   useEffect(() => {
     const checkMobile = () => {
