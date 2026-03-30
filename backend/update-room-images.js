@@ -4,16 +4,16 @@ dotenv.config();
 
 const Room = require('./src/models/Room');
 
-// Room interior images
+// Room interior images (dorm/hostel room photos)
 const roomImages = [
-  'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-  'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-  'https://images.unsplash.com/photo-1560185007-c5ca9d2c014d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-  'https://images.unsplash.com/photo-1560448204-603b3fc33ddc?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-  'https://images.unsplash.com/photo-1555854877-bab0e564b8d5?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-  'https://images.unsplash.com/photo-1598928509925-5cde3f4109bc?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-  'https://images.unsplash.com/photo-1560185127-6ed189bf02f4?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-  'https://images.unsplash.com/photo-1581094794329-c8112a89af12?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+  'https://images.pexels.com/photos/271618/pexels-photo-271618.jpeg?auto=compress&cs=tinysrgb&w=800',
+  'https://images.pexels.com/photos/1648771/pexels-photo-1648771.jpeg?auto=compress&cs=tinysrgb&w=800',
+  'https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=800',
+  'https://images.pexels.com/photos/276724/pexels-photo-276724.jpeg?auto=compress&cs=tinysrgb&w=800',
+  'https://images.pexels.com/photos/280229/pexels-photo-280229.jpeg?auto=compress&cs=tinysrgb&w=800',
+  'https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=800',
+  'https://images.pexels.com/photos/2102587/pexels-photo-2102587.jpeg?auto=compress&cs=tinysrgb&w=800',
+  'https://images.pexels.com/photos/1029599/pexels-photo-1029599.jpeg?auto=compress&cs=tinysrgb&w=800'
 ];
 
 async function updateRoomImages() {
@@ -27,18 +27,14 @@ async function updateRoomImages() {
     let updated = 0;
     
     for (const room of rooms) {
+      // Assign random image from array
       const randomImage = roomImages[Math.floor(Math.random() * roomImages.length)];
-      
-      if (!room.images || room.images.length === 0) {
-        await Room.findByIdAndUpdate(room._id, { images: [randomImage] });
-        updated++;
-        console.log(`✅ Added image to Room ${room.roomNumber}`);
-      } else {
-        console.log(`⚠️ Room ${room.roomNumber} already has images`);
-      }
+      await Room.findByIdAndUpdate(room._id, { images: [randomImage] });
+      updated++;
+      console.log(`✅ Updated Room ${room.roomNumber} with hostel room image`);
     }
     
-    console.log(`\n📊 Updated ${updated} rooms with images`);
+    console.log(`\n📊 Updated ${updated} rooms with hostel room images`);
     
     await mongoose.disconnect();
     console.log('\n✅ Done!');
