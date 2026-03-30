@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { motion } from 'framer-motion';
 import { Mail, Lock, ArrowRight, Building2, Eye, EyeOff, Home } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -22,15 +23,16 @@ const Login = () => {
     setLoading(false);
     
     if (success) {
+      // Navigate to dashboard after successful login
       navigate('/dashboard');
     } else {
       setError('Invalid email or password');
+      toast.error('Invalid email or password');
     }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
-      {/* Back to Home Button */}
       <Link
         to="/"
         className="absolute top-6 left-6 flex items-center gap-2 px-4 py-2 bg-white/80 backdrop-blur-sm rounded-lg shadow-md hover:bg-white transition-all z-10"
@@ -45,7 +47,6 @@ const Login = () => {
         transition={{ duration: 0.5 }}
         className="w-full max-w-md"
       >
-        {/* Logo and Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-black shadow-lg mb-4">
             <Building2 className="w-8 h-8 text-white" />
@@ -54,7 +55,6 @@ const Login = () => {
           <p className="text-gray-500 mt-2">Sign in to your account</p>
         </div>
 
-        {/* Login Form */}
         <div className="bg-white rounded-2xl shadow-xl p-8">
           {error && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">

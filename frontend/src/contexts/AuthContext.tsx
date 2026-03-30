@@ -46,12 +46,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const token = localStorage.getItem('token');
       const storedUser = localStorage.getItem('user');
       
-      // If we're on login page, don't restore session
-      if (window.location.pathname === '/login') {
-        setLoading(false);
-        return;
-      }
-      
       if (token && storedUser) {
         try {
           const userData = JSON.parse(storedUser);
@@ -64,22 +58,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             if (response.data.success) {
               setUser(response.data.data);
               localStorage.setItem('user', JSON.stringify(response.data.data));
-            } else {
-              // Token invalid, redirect to login
-              localStorage.removeItem('token');
-              localStorage.removeItem('user');
-              setUser(null);
-              window.location.href = '/login';
             }
           } catch (err) {
-            console.log('Backend verification failed');
+            console.log('Backend verification failed, using stored user');
           }
         } catch (err) {
           localStorage.removeItem('user');
         }
-      } else if (!window.location.pathname.includes('/login') && window.location.pathname !== '/') {
-        // No token, redirect to login
-        window.location.href = '/login';
       }
       setLoading(false);
     };
@@ -95,8 +80,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.setItem('token', response.data.token);
         localStorage.setItem('user', JSON.stringify(response.data.user));
         toast.success(`Welcome back, ${response.data.user.name}!`);
-        // Redirect to dashboard after login
-        window.location.href = '/dashboard';
         return true;
       }
       toast.error('Login failed');
@@ -116,7 +99,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.setItem('token', response.data.token);
         localStorage.setItem('user', JSON.stringify(response.data.user));
         toast.success('Account created successfully!');
-        window.location.href = '/dashboard';
         return true;
       }
       toast.error('Registration failed');
@@ -128,16 +110,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = useCallback(() => {
-    console.log('🚪 Logging out...');
-    // Clear state
     setUser(null);
     setNotifications([]);
-    // Clear storage
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    // Show success message
     toast.success('Logged out successfully');
-    // Force redirect to login page
+    // Use React Router navigation instead of hard reload
     window.location.href = '/login';
   }, []);
 
