@@ -12,34 +12,19 @@ export interface User {
   matricNumber?: string;
   phoneNumber?: string;
   gender?: 'male' | 'female';
-  room?: {
-    _id: string;
-    roomNumber: string;
-    blockName: string;
-  };
+  room?: any;
   isActive: boolean;
   createdAt: string;
 }
 
-export interface Notification {
-  _id: string;
-  title: string;
-  message: string;
-  type: 'info' | 'success' | 'warning' | 'error';
-  read: boolean;
-  createdAt: string;
-  link?: string;
-}
-
 interface AuthContextType {
   user: User | null;
-  notifications: Notification[];
+  notifications: any[];
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  register: (data: any) => Promise<{ success: boolean; error?: string }>;
+  login: (email: string, password: string) => Promise<boolean>;
+  register: (data: any) => Promise<boolean>;
   logout: () => void;
-  markNotificationRead: (id: string) => Promise<void>;
-  fetchNotifications: () => Promise<void>;
+  markNotificationRead: (id: string) => void;
   unreadCount: number;
 }
 
@@ -53,159 +38,112 @@ export const useAuth = () => {
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notifications, setNotifications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchNotifications = useCallback(async () => {
-    try {
+  useEffect(() => {
+    const restoreSession = async () => {
       const token = localStorage.getItem('token');
-      if (!token) return;
+      const storedUser = localStorage.getItem('user');
       
-      const response = await axios.get(`${API_URL}/notifications`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      if (response.data.success) {
-        const formattedNotifs = response.data.data.map((notif: any) => ({
-          _id: notif._id,
-          title: notif.subject || notif.title || 'Notification',
-          message: notif.content || notif.message || '',
-          type: notif.channel === 'payment' ? 'success' : 
-                 notif.priority === 'high' ? 'warning' : 'info',
-          read: notif.status === 'read',
-          createdAt: notif.createdAt || notif.sentAt || new Date().toISOString(),
-          link: notif.link,
-        }));
-        setNotifications(formattedNotifs);
+      // If we're on login page, don't restore session
+      if (window.location.pathname === '/login') {
+        setLoading(false);
+        return;
       }
-    } catch (error) {
-      console.error('Error fetching notifications:', error);
-    }
+      
+      if (token && storedUser) {
+        try {
+          const userData = JSON.parse(storedUser);
+          setUser(userData);
+          
+          try {
+            const response = await axios.get(`${API_URL}/auth/me`, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            if (response.data.success) {
+              setUser(response.data.data);
+              localStorage.setItem('user', JSON.stringify(response.data.data));
+            } else {
+              // Token invalid, redirect to login
+              localStorage.removeItem('token');
+              localStorage.removeItem('user');
+              setUser(null);
+              window.location.href = '/login';
+            }
+          } catch (err) {
+            console.log('Backend verification failed');
+          }
+        } catch (err) {
+          localStorage.removeItem('user');
+        }
+      } else if (!window.location.pathname.includes('/login') && window.location.pathname !== '/') {
+        // No token, redirect to login
+        window.location.href = '/login';
+      }
+      setLoading(false);
+    };
+    
+    restoreSession();
   }, []);
 
-  const restoreSession = useCallback(async () => {
-    const token = localStorage.getItem('token');
-    const storedUser = localStorage.getItem('user');
-    
-    if (!token) {
-      setLoading(false);
-      return false;
-    }
-    
-    // If we have stored user data, set it immediately
-    if (storedUser) {
-      try {
-        const userData = JSON.parse(storedUser);
-        setUser(userData);
-      } catch (error) {
-        console.error('Error parsing stored user:', error);
-      }
-    }
-    
-    // Verify token with backend
-    try {
-      const response = await axios.get(`${API_URL}/auth/me`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      if (response.data.success) {
-        const userData = response.data.data;
-        setUser(userData);
-        localStorage.setItem('user', JSON.stringify(userData));
-        await fetchNotifications();
-        setLoading(false);
-        return true;
-      } else {
-        // Token invalid, clear storage
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        setUser(null);
-        setLoading(false);
-        return false;
-      }
-    } catch (error) {
-      console.error('Session restore error:', error);
-      // Don't clear user on network error, keep stored data
-      setLoading(false);
-      return !!storedUser;
-    }
-  }, [fetchNotifications]);
-
-  useEffect(() => {
-    restoreSession();
-  }, [restoreSession]);
-
-  const login = useCallback(async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
-    const loadingToast = toast.loading('Logging in...');
+  const login = async (email: string, password: string): Promise<boolean> => {
     try {
       const response = await axios.post(`${API_URL}/auth/login`, { email, password });
       if (response.data.success) {
-        const userData = response.data.user;
-        setUser(userData);
+        setUser(response.data.user);
         localStorage.setItem('token', response.data.token);
-        localStorage.setItem('user', JSON.stringify(userData));
-        await fetchNotifications();
-        toast.dismiss(loadingToast);
-        toast.success(`Welcome back, ${userData.name}!`);
-        return { success: true };
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+        toast.success(`Welcome back, ${response.data.user.name}!`);
+        // Redirect to dashboard after login
+        window.location.href = '/dashboard';
+        return true;
       }
-      toast.dismiss(loadingToast);
-      toast.error('Login failed. Please check your credentials.');
-      return { success: false, error: 'Invalid credentials' };
+      toast.error('Login failed');
+      return false;
     } catch (error: any) {
-      console.error('Login error:', error);
-      toast.dismiss(loadingToast);
-      const errorMsg = error.response?.data?.message || 'Login failed. Please try again.';
-      toast.error(errorMsg);
-      return { success: false, error: errorMsg };
+      toast.error(error.response?.data?.message || 'Login failed');
+      return false;
     }
-  }, [fetchNotifications]);
+  };
 
-  const register = useCallback(async (data: any): Promise<{ success: boolean; error?: string }> => {
-    const loadingToast = toast.loading('Creating account...');
+  const register = async (data: any): Promise<boolean> => {
     try {
       const registerData = { ...data, role: 'student' };
       const response = await axios.post(`${API_URL}/auth/register`, registerData);
       if (response.data.success) {
-        const userData = response.data.user;
-        setUser(userData);
+        setUser(response.data.user);
         localStorage.setItem('token', response.data.token);
-        localStorage.setItem('user', JSON.stringify(userData));
-        toast.dismiss(loadingToast);
-        toast.success('Account created successfully! Welcome!');
-        return { success: true };
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+        toast.success('Account created successfully!');
+        window.location.href = '/dashboard';
+        return true;
       }
-      toast.dismiss(loadingToast);
-      toast.error('Registration failed. Please try again.');
-      return { success: false, error: 'Registration failed' };
+      toast.error('Registration failed');
+      return false;
     } catch (error: any) {
-      console.error('Registration error:', error);
-      toast.dismiss(loadingToast);
-      const errorMsg = error.response?.data?.message || 'Registration failed. Please try again.';
-      toast.error(errorMsg);
-      return { success: false, error: errorMsg };
+      toast.error(error.response?.data?.message || 'Registration failed');
+      return false;
     }
-  }, []);
+  };
 
   const logout = useCallback(() => {
+    console.log('🚪 Logging out...');
+    // Clear state
     setUser(null);
     setNotifications([]);
+    // Clear storage
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    // Show success message
     toast.success('Logged out successfully');
+    // Force redirect to login page
+    window.location.href = '/login';
   }, []);
 
-  const markNotificationRead = useCallback(async (id: string) => {
-    try {
-      const token = localStorage.getItem('token');
-      await axios.put(`${API_URL}/notifications/${id}/read`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setNotifications(prev => prev.map(n => n._id === id ? { ...n, read: true } : n));
-    } catch (error) {
-      console.error('Error marking notification read:', error);
-    }
-  }, []);
+  const markNotificationRead = (id: string) => {
+    setNotifications(prev => prev.map(n => n._id === id ? { ...n, read: true } : n));
+  };
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -217,11 +155,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       login, 
       register, 
       logout, 
-      markNotificationRead,
-      fetchNotifications,
+      markNotificationRead, 
       unreadCount 
     }}>
-      {children}
+      {!loading ? children : (
+        <div className="flex items-center justify-center h-screen bg-white">
+          <div className="text-center">
+            <div className="w-16 h-16 border-4 border-black border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading your session...</p>
+          </div>
+        </div>
+      )}
     </AuthContext.Provider>
   );
 };

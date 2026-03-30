@@ -29,19 +29,26 @@ import AdminSettings from './pages/admin/AdminSettings';
 
 import './index.css';
 
-// Protected Route Component
+// Loading component
+const LoadingScreen = () => (
+  <div className="flex items-center justify-center h-screen bg-white">
+    <div className="text-center">
+      <div className="w-16 h-16 border-4 border-black border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+      <p className="text-gray-600">Loading your session...</p>
+    </div>
+  </div>
+);
+
+// Protected Route Component with loading state
 const ProtectedRoute: React.FC<{
   children: React.ReactNode;
   requiredRole?: 'student' | 'admin';
 }> = ({ children, requiredRole }) => {
   const { user, loading } = useAuth();
 
+  // Show loading screen while checking authentication
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="w-12 h-12 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   if (!user) {
