@@ -29,15 +29,14 @@ export interface Notification {
   read: boolean;
   createdAt: string;
   link?: string;
-  channel?: string;
 }
 
 interface AuthContextType {
   user: User | null;
   notifications: Notification[];
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<boolean>;
-  register: (data: any) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  register: (data: any) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   markNotificationRead: (id: string) => Promise<void>;
   fetchNotifications: () => Promise<void>;
@@ -57,7 +56,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch notifications from API
   const fetchNotifications = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
@@ -68,68 +66,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       
       if (response.data.success) {
-        // Transform backend notification format to frontend format
         const formattedNotifs = response.data.data.map((notif: any) => ({
           _id: notif._id,
           title: notif.subject || notif.title || 'Notification',
           message: notif.content || notif.message || '',
           type: notif.channel === 'payment' ? 'success' : 
-                 notif.priority === 'high' ? 'warning' : 
-                 notif.channel === 'ticket' ? 'info' : 'info',
+                 notif.priority === 'high' ? 'warning' : 'info',
           read: notif.status === 'read',
           createdAt: notif.createdAt || notif.sentAt || new Date().toISOString(),
           link: notif.link,
-          channel: notif.channel
         }));
         setNotifications(formattedNotifs);
-        
-        // Show toast for new unread notifications (only show a few)
-        const unread = formattedNotifs.filter((n: Notification) => !n.read);
-        const newUnread = unread.filter(u => {
-          // Check if this notification is new (within last minute)
-          const notifTime = new Date(u.createdAt).getTime();
-          const now = Date.now();
-          return (now - notifTime) < 60000; // Last minute
-        });
-        
-        if (newUnread.length > 0 && newUnread.length <= 3) {
-          newUnread.forEach(notif => {
-            toast(notif.message, {
-              icon: notif.type === 'success' ? '✅' : notif.type === 'warning' ? '⚠️' : '🔔',
-              duration: 5000,
-              style: {
-                background: '#f3f4f6',
-                color: '#000000',
-              },
-            });
-          });
-        } else if (newUnread.length > 3) {
-          toast(`You have ${newUnread.length} new notifications`, {
-            icon: '🔔',
-            duration: 5000,
-            style: {
-              background: '#f3f4f6',
-              color: '#000000',
-            },
-          });
-        }
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error fetching notifications:', error);
-      if (error.response?.status === 401) {
-        // Silent fail - user might not be logged in
-      }
     }
   }, []);
 
-  // Check token validity
   const checkToken = useCallback(async (token: string) => {
     try {
       const response = await axios.get(`${API_URL}/auth/me`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (response.data.success) {
-        setUser(response.data.data);
+        const userData = response.data.data;
+        setUser(userData);
+        // Store user in localStorage
+        localStorage.setItem('user', JSON.stringify(userData));
         await fetchNotifications();
         return true;
       }
@@ -143,71 +106,75 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const initAuth = async () => {
       const token = localStorage.getItem('token');
-      if (token) {
-        const isValid = await checkToken(token);
-        if (!isValid) {
-          localStorage.removeItem('token');
-          setUser(null);
-          toast.error('Session expired. Please login again.');
+      const storedUser = localStorage.getItem('user');
+      
+      // If we have stored user data, use it immediately
+      if (storedUser) {
+        try {
+          const userData = JSON.parse(storedUser);
+          setUser(userData);
+        } catch (error) {
+          console.error('Error parsing stored user:', error);
         }
+      }
+      
+      if (token) {
+        await checkToken(token);
       }
       setLoading(false);
     };
     initAuth();
-    
-    // Set up periodic notification refresh (every 30 seconds)
-    const interval = setInterval(() => {
-      if (localStorage.getItem('token')) {
-        fetchNotifications();
-      }
-    }, 30000);
-    
-    return () => clearInterval(interval);
-  }, [checkToken, fetchNotifications]);
+  }, [checkToken]);
 
-  const login = useCallback(async (email: string, password: string): Promise<boolean> => {
+  const login = useCallback(async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     const loadingToast = toast.loading('Logging in...');
     try {
       const response = await axios.post(`${API_URL}/auth/login`, { email, password });
       if (response.data.success) {
-        setUser(response.data.user);
+        const userData = response.data.user;
+        setUser(userData);
         localStorage.setItem('token', response.data.token);
+        localStorage.setItem('user', JSON.stringify(userData));
         await fetchNotifications();
         toast.dismiss(loadingToast);
-        toast.success(`Welcome back, ${response.data.user.name}!`);
-        return true;
+        toast.success(`Welcome back, ${userData.name}!`);
+        return { success: true };
       }
       toast.dismiss(loadingToast);
       toast.error('Login failed. Please check your credentials.');
-      return false;
+      return { success: false, error: 'Invalid credentials' };
     } catch (error: any) {
       console.error('Login error:', error);
       toast.dismiss(loadingToast);
-      toast.error(error.response?.data?.message || 'Login failed. Please try again.');
-      return false;
+      const errorMsg = error.response?.data?.message || 'Login failed. Please try again.';
+      toast.error(errorMsg);
+      return { success: false, error: errorMsg };
     }
   }, [fetchNotifications]);
 
-  const register = useCallback(async (data: any): Promise<boolean> => {
+  const register = useCallback(async (data: any): Promise<{ success: boolean; error?: string }> => {
     const loadingToast = toast.loading('Creating account...');
     try {
       const registerData = { ...data, role: 'student' };
       const response = await axios.post(`${API_URL}/auth/register`, registerData);
       if (response.data.success) {
-        setUser(response.data.user);
+        const userData = response.data.user;
+        setUser(userData);
         localStorage.setItem('token', response.data.token);
+        localStorage.setItem('user', JSON.stringify(userData));
         toast.dismiss(loadingToast);
         toast.success('Account created successfully! Welcome!');
-        return true;
+        return { success: true };
       }
       toast.dismiss(loadingToast);
       toast.error('Registration failed. Please try again.');
-      return false;
+      return { success: false, error: 'Registration failed' };
     } catch (error: any) {
       console.error('Registration error:', error);
       toast.dismiss(loadingToast);
-      toast.error(error.response?.data?.message || 'Registration failed. Please try again.');
-      return false;
+      const errorMsg = error.response?.data?.message || 'Registration failed. Please try again.';
+      toast.error(errorMsg);
+      return { success: false, error: errorMsg };
     }
   }, []);
 
@@ -215,6 +182,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null);
     setNotifications([]);
     localStorage.removeItem('token');
+    localStorage.removeItem('user');
     toast.success('Logged out successfully');
   }, []);
 
