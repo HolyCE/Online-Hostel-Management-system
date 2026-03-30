@@ -17,12 +17,26 @@ const Login = () => {
     setError('');
     setLoading(true);
     
+    console.log('1. Login form submitted with:', email);
+    
     const success = await login(email, password);
     
+    console.log('2. Login result:', success);
+    
     if (success) {
-      // Simple redirect - no complexity
-      window.location.href = '/dashboard';
+      console.log('3. Login successful, checking token...');
+      const token = localStorage.getItem('token');
+      console.log('4. Token exists?', !!token);
+      
+      if (token) {
+        console.log('5. Redirecting to dashboard...');
+        window.location.href = '/dashboard';
+      } else {
+        console.log('5. No token found!');
+        setError('Login succeeded but no token saved');
+      }
     } else {
+      console.log('3. Login failed');
       setError('Invalid email or password');
       toast.error('Invalid email or password');
     }

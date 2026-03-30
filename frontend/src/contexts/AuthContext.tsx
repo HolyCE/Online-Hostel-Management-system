@@ -28,7 +28,6 @@ export const useAuth = () => {
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(() => {
-    // Try to load user from localStorage on initial render
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
       try {
@@ -41,19 +40,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   });
 
   const login = async (email: string, password: string): Promise<boolean> => {
+    console.log('🔐 AuthContext.login called');
+    console.log('📡 API URL:', API_URL);
+    console.log('📧 Email:', email);
+    
     try {
       const response = await axios.post(`${API_URL}/auth/login`, { email, password });
+      console.log('📥 Response status:', response.status);
+      console.log('📥 Response data:', response.data);
+      
       if (response.data.success) {
         const userData = response.data.user;
+        const token = response.data.token;
+        
+        console.log('✅ Login successful');
+        console.log('👤 User:', userData);
+        console.log('🔑 Token:', token ? `${token.substring(0, 20)}...` : 'MISSING');
+        
         setUser(userData);
-        localStorage.setItem('token', response.data.token);
+        
+        if (token) {
+          localStorage.setItem('token', token);
+          console.log('💾 Token saved to localStorage');
+        } else {
+          console.error('❌ No token received!');
+        }
+        
         localStorage.setItem('user', JSON.stringify(userData));
+        console.log('💾 User saved to localStorage');
+        
         toast.success(`Welcome back, ${userData.name}!`);
         return true;
+      } else {
+        console.log('❌ Login failed - response.data.success is false');
+        toast.error('Login failed');
+        return false;
       }
-      toast.error('Login failed');
-      return false;
     } catch (error: any) {
+      console.error('💥 Login error:', error);
+      console.error('Error response:', error.response?.data);
       toast.error(error.response?.data?.message || 'Login failed');
       return false;
     }
