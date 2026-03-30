@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { motion } from 'framer-motion';
 import { BedDouble, CreditCard, Ticket, Clock, Home, ArrowRight } from 'lucide-react';
@@ -11,7 +10,6 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const StudentOverview = () => {
   const { user } = useAuth();
-  const navigate = useNavigate();
   const [room, setRoom] = useState(null);
   const [payments, setPayments] = useState([]);
   const [tickets, setTickets] = useState([]);
@@ -24,10 +22,6 @@ const StudentOverview = () => {
   const fetchStudentData = async () => {
     try {
       const token = localStorage.getItem('token');
-      if (!token) {
-        navigate('/login');
-        return;
-      }
       const headers = { Authorization: `Bearer ${token}` };
 
       const [roomRes, paymentsRes, ticketsRes] = await Promise.all([
@@ -39,17 +33,8 @@ const StudentOverview = () => {
       setRoom(roomRes.data.data);
       setPayments(paymentsRes.data.data || []);
       setTickets(ticketsRes.data.data || []);
-      
-      if (roomRes.data.data) {
-        toast.success(`Welcome back! You're allocated to Room ${roomRes.data.data.roomNumber}`);
-      }
     } catch (error: any) {
       console.error('Error fetching data:', error);
-      if (error.response?.status === 401) {
-        navigate('/login');
-      } else {
-        toast.error(error.response?.data?.message || 'Failed to load dashboard data');
-      }
     } finally {
       setLoading(false);
     }
@@ -63,36 +48,27 @@ const StudentOverview = () => {
       label: 'Room Status', 
       value: room ? `Room ${room.roomNumber}` : 'Not Allocated', 
       icon: BedDouble, 
-      link: '/dashboard/rooms',
-      color: room ? 'bg-gray-100' : 'bg-gray-50'
+      link: '/dashboard/rooms'
     },
     { 
       label: 'Total Spent', 
       value: `₦${totalSpent.toLocaleString() || '0'}`, 
       icon: CreditCard, 
-      link: '/dashboard/payments',
-      color: 'bg-gray-100'
+      link: '/dashboard/payments'
     },
     { 
       label: 'Pending Tickets', 
       value: String(pendingTickets), 
       icon: Ticket, 
-      link: '/dashboard/tickets',
-      color: pendingTickets > 0 ? 'bg-gray-200' : 'bg-gray-100'
+      link: '/dashboard/tickets'
     },
     { 
       label: 'Days Remaining', 
       value: '186', 
       icon: Clock, 
-      link: '#',
-      color: 'bg-gray-100'
+      link: '#'
     },
   ];
-
-  const handleBrowseRooms = () => {
-    navigate('/dashboard/rooms');
-    toast.info('Browse available rooms to find your perfect space!');
-  };
 
   if (loading) {
     return (
@@ -129,12 +105,12 @@ const StudentOverview = () => {
             transition={{ delay: index * 0.1 }}
           >
             <Link to={stat.link} className="block">
-              <div className={`bg-white rounded-lg shadow-md p-5 hover:shadow-lg transition-all border border-gray-200 ${stat.color}`}>
+              <div className="bg-white rounded-lg shadow-md p-5 hover:shadow-lg transition-all border border-gray-200">
                 <div className="flex items-start justify-between mb-3">
                   <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">
                     {stat.label}
                   </span>
-                  <div className="w-10 h-10 rounded-lg bg-gray-200 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center">
                     <stat.icon className="w-5 h-5 text-black" />
                   </div>
                 </div>
@@ -151,12 +127,7 @@ const StudentOverview = () => {
       </div>
 
       {room ? (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="bg-white rounded-lg shadow-md p-6 mb-8 border border-gray-200"
-        >
+        <div className="bg-white rounded-lg shadow-md p-6 mb-8 border border-gray-200">
           <div className="flex items-center gap-2 mb-4">
             <Home className="w-5 h-5 text-black" />
             <h2 className="text-lg font-semibold text-black">Your Room Details</h2>
@@ -180,51 +151,25 @@ const StudentOverview = () => {
               <p className="text-lg font-semibold text-black">₦{room.price?.toLocaleString()}</p>
             </div>
           </div>
-
-          {room.amenities && room.amenities.length > 0 && (
-            <div className="mt-4">
-              <p className="text-sm font-medium text-gray-700 mb-2">Amenities</p>
-              <div className="flex flex-wrap gap-2">
-                {room.amenities.map((amenity: string, index: number) => (
-                  <span 
-                    key={index}
-                    className="px-3 py-1 bg-gray-100 text-black rounded-full text-xs font-medium border border-gray-200"
-                  >
-                    {amenity}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-        </motion.div>
+        </div>
       ) : (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="bg-white rounded-lg shadow-md p-8 mb-8 text-center border border-gray-200"
-        >
+        <div className="bg-white rounded-lg shadow-md p-8 mb-8 text-center border border-gray-200">
           <Home className="w-12 h-12 text-gray-400 mx-auto mb-3" />
           <h3 className="text-lg font-semibold text-black mb-2">No Room Allocated Yet</h3>
           <p className="text-gray-500 mb-4">
             You haven't been allocated a room. Browse available rooms and apply now.
           </p>
-          <button
-            onClick={handleBrowseRooms}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors"
+          <Link
+            to="/dashboard/rooms"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800"
           >
             Browse Rooms <ArrowRight className="w-4 h-4" />
-          </button>
-        </motion.div>
+          </Link>
+        </div>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.3 }}
-          className="bg-white rounded-lg shadow-md p-6 border border-gray-200"
-        >
+        <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-black">Recent Payments</h3>
             <Link to="/dashboard/payments" className="text-sm text-black hover:underline flex items-center gap-1">
@@ -253,14 +198,9 @@ const StudentOverview = () => {
               ))}
             </div>
           )}
-        </motion.div>
+        </div>
 
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.3 }}
-          className="bg-white rounded-lg shadow-md p-6 border border-gray-200"
-        >
+        <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-black">Recent Tickets</h3>
             <Link to="/dashboard/tickets" className="text-sm text-black hover:underline flex items-center gap-1">
@@ -289,7 +229,7 @@ const StudentOverview = () => {
               ))}
             </div>
           )}
-        </motion.div>
+        </div>
       </div>
     </div>
   );
