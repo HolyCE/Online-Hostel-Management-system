@@ -32,15 +32,20 @@ import './index.css';
 // Simple Protected Route - just checks token
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const token = localStorage.getItem('token');
+  console.log('🔒 ProtectedRoute - Token exists?', !!token);
+  console.log('📍 ProtectedRoute - Path:', window.location.pathname);
   
   if (!token) {
+    console.log('❌ No token, redirecting to login');
     return <Navigate to="/login" replace />;
   }
   
+  console.log('✅ Token found, rendering protected content');
   return <>{children}</>;
 };
 
 function App() {
+  console.log('🏠 App rendering');
   return (
     <ThemeContextProvider>
       <AuthProvider>

@@ -11,22 +11,21 @@ const DashboardLayout = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
+  console.log('📱 DashboardLayout rendering, isAuthenticated:', isAuthenticated);
+
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
-      if (window.innerWidth >= 768) {
-        setMobileMenuOpen(false);
-      }
     };
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
-
-  // Calculate margin based on sidebar state (desktop only)
-  const contentMargin = !isMobile ? (sidebarCollapsed ? 'ml-20' : 'ml-[280px]') : 'ml-0';
+  if (!isAuthenticated) {
+    console.log('❌ DashboardLayout - Not authenticated, redirecting to login');
+    return <Navigate to="/login" replace />;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -38,8 +37,8 @@ const DashboardLayout = () => {
       {/* Mobile Menu - Dropdown */}
       <MobileMenu isOpen={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} />
       
-      {/* Main Content - margin adjusts with sidebar */}
-      <div className={`min-h-screen flex flex-col transition-all duration-300 ${contentMargin}`}>
+      {/* Main Content */}
+      <div className={`min-h-screen flex flex-col ${!isMobile && (sidebarCollapsed ? 'ml-20' : 'ml-[280px]')}`}>
         <TopBar 
           onMenuClick={() => setMobileMenuOpen(true)}
           sidebarCollapsed={sidebarCollapsed}
