@@ -1,4 +1,3 @@
-const mongoose = require('mongoose');
 const Payment = require('../models/Payment');
 const User = require('../models/User');
 const Room = require('../models/Room');
@@ -16,7 +15,7 @@ const paystack = axios.create({
 });
 
 // Helper function to allocate room after payment
-const allocateRoomAfterPayment = async (studentId, roomId) => {
+const allocateRoomAfterPayment = async (studentId, roomId, duration = 'session') => {
   try {
     console.log(`Allocating room ${roomId} to student ${studentId}`);
     
@@ -28,36 +27,31 @@ const allocateRoomAfterPayment = async (studentId, roomId) => {
       return false;
     }
     
-    // Check if student already has a room
     if (student.room) {
-      console.log('Student already has a room:', student.room);
+      console.log('Student already has a room');
       return false;
     }
     
-    // Check if room has capacity
     const currentOccupants = room.occupants ? room.occupants.length : 0;
     if (currentOccupants >= room.capacity) {
       console.log('Room is full');
       return false;
     }
     
-    // Update student with room
     await User.findByIdAndUpdate(studentId, { room: roomId });
     
-    // Update room with student
     if (!room.occupants) room.occupants = [];
     room.occupants.push(studentId);
     await room.save();
     
     console.log(`✅ Room ${room.roomNumber} allocated to ${student.name}`);
     
-    // Send notification
     await Notification.create({
       recipient: studentId,
       type: 'in_app',
       channel: 'room',
       subject: 'Room Allocated Successfully! 🎉',
-      content: `You have been allocated Room ${room.roomNumber} in ${room.blockName}. Welcome to your new space!`,
+      content: `You have been allocated Room ${room.roomNumber} in ${room.blockName} for ${duration}. Welcome to your new space!`,
       status: 'sent',
       sentAt: new Date()
     });
@@ -84,7 +78,6 @@ exports.initializePayment = async (req, res) => {
       });
     }
 
-    // Check if student already has a room
     if (student.room) {
       return res.status(400).json({
         success: false,
@@ -100,11 +93,18 @@ exports.initializePayment = async (req, res) => {
       });
     }
 
-    // Check if room is available
-    if (room.status !== 'available') {
+    if (room.status === 'maintenance') {
       return res.status(400).json({
         success: false,
-        message: `This room is currently ${room.status}. Please select another room.`
+        message: 'This room is under maintenance and not available'
+      });
+    }
+
+    const currentOccupants = room.occupants ? room.occupants.length : 0;
+    if (currentOccupants >= room.capacity) {
+      return res.status(400).json({
+        success: false,
+        message: 'This room is full'
       });
     }
 
@@ -129,9 +129,10 @@ exports.initializePayment = async (req, res) => {
     });
 
     // Initialize with Paystack
+    // IMPORTANT: Send amount in kobo (multiply by 100) - this is the ONLY place we multiply
     const paystackResponse = await paystack.post('/transaction/initialize', {
       email: student.email,
-      amount: amount * 100,
+      amount: amount * 100, // Convert to kobo for Paystack
       reference: reference,
       metadata: {
         studentId: student._id.toString(),
@@ -173,27 +174,17 @@ exports.initializePayment = async (req, res) => {
 exports.verifyPayment = async (req, res) => {
   try {
     const { reference } = req.params;
-    console.log('🔍 Verifying payment with reference:', reference);
+    console.log('Verifying payment with reference:', reference);
 
     const payment = await Payment.findOne({ reference });
     if (!payment) {
-      console.log('❌ Payment not found for reference:', reference);
       return res.status(404).json({
         success: false,
         message: 'Payment not found'
       });
     }
 
-    console.log('📋 Payment found:', {
-      id: payment._id,
-      status: payment.status,
-      amount: payment.amount,
-      student: payment.student
-    });
-
-    // If payment is already successful, just return it
     if (payment.status === 'success') {
-      console.log('✅ Payment already verified');
       return res.json({
         success: true,
         message: 'Payment already verified',
@@ -201,86 +192,56 @@ exports.verifyPayment = async (req, res) => {
       });
     }
 
-    // Verify with Paystack
-    try {
-      const response = await paystack.get(`/transaction/verify/${reference}`);
-      const paystackData = response.data.data;
-      console.log('📊 Paystack response status:', paystackData.status);
+    const response = await paystack.get(`/transaction/verify/${reference}`);
+    console.log('Paystack response status:', response.data.data.status);
 
-      if (paystackData.status === 'success') {
-        // Update payment record
-        payment.status = 'success';
-        payment.transactionId = paystackData.id;
-        payment.paymentDate = new Date();
-        payment.metadata = {
-          ...payment.metadata,
-          paystackResponse: paystackData,
-          verifiedAt: new Date()
-        };
-        await payment.save();
-        console.log('✅ Payment record updated to success');
+    if (response.data.data.status === 'success') {
+      payment.status = 'success';
+      payment.transactionId = response.data.data.id;
+      payment.paymentDate = new Date();
+      payment.metadata = {
+        ...payment.metadata,
+        ...response.data.data,
+        verifiedAt: new Date()
+      };
+      await payment.save();
 
-        // Allocate room to student
-        const allocated = await allocateRoomAfterPayment(payment.student, payment.room);
-        
-        if (allocated) {
-          console.log('✅ Room allocated successfully');
-          
-          // Log action
-          await AuditLog.create({
-            user: payment.student,
-            action: 'VERIFY_PAYMENT',
-            details: `Payment verified: ₦${payment.amount}`,
-            resource: 'payment',
-            resourceId: payment._id,
-            ip: req.ip,
-            userAgent: req.get('User-Agent'),
-            status: 'success'
-          });
-        }
-
-        res.json({
-          success: true,
-          message: 'Payment verified successfully! Room allocated.',
-          data: payment
-        });
-      } else {
-        // Payment failed or was abandoned
-        payment.status = 'failed';
-        await payment.save();
-        
-        console.log('❌ Payment not successful:', paystackData.status);
-        res.json({
-          success: false,
-          message: `Payment ${paystackData.status}. Please try again.`,
-          data: paystackData
-        });
-      }
-    } catch (paystackError) {
-      console.error('❌ Paystack verification error:', paystackError.response?.data || paystackError.message);
+      const duration = payment.metadata?.duration || 'session';
+      await allocateRoomAfterPayment(payment.student, payment.room, duration);
       
-      // Don't mark as failed if it's just a connection issue
-      if (paystackError.response?.data?.status === 'abandoned') {
-        res.json({
-          success: false,
-          message: 'Payment was not completed. Please try again.',
-          data: paystackError.response?.data
-        });
-      } else {
-        res.status(500).json({
-          success: false,
-          message: 'Failed to verify payment with Paystack. Please contact support.',
-          error: paystackError.response?.data?.message || paystackError.message
-        });
-      }
+      await AuditLog.create({
+        user: payment.student,
+        action: 'VERIFY_PAYMENT',
+        details: `Payment verified: ₦${payment.amount}`,
+        resource: 'payment',
+        resourceId: payment._id,
+        ip: req.ip,
+        userAgent: req.get('User-Agent'),
+        status: 'success'
+      });
+
+      res.json({
+        success: true,
+        message: 'Payment verified successfully',
+        data: payment
+      });
+    } else {
+      payment.status = 'failed';
+      await payment.save();
+      
+      res.json({
+        success: false,
+        message: 'Payment not successful',
+        data: response.data.data
+      });
     }
 
   } catch (error) {
-    console.error('❌ Payment verification error:', error);
+    console.error('Payment verification error:', error.response?.data || error.message);
     res.status(500).json({
       success: false,
       message: 'Payment verification failed',
-      error: error.message
+      error: error.response?.data?.message || error.message
     });
   }
 };
@@ -345,7 +306,6 @@ exports.getAllPayments = async (req, res) => {
 exports.handleWebhook = async (req, res) => {
   try {
     const event = req.body;
-    console.log('Webhook received:', event.event);
     
     if (event.event === 'charge.success') {
       const reference = event.data.reference;
@@ -363,7 +323,6 @@ exports.handleWebhook = async (req, res) => {
       
       if (payment && payment.status === 'success') {
         await allocateRoomAfterPayment(payment.student, payment.room);
-        console.log('✅ Webhook: Room allocated');
       }
     }
     
