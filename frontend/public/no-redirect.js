@@ -6,18 +6,33 @@
   const user = localStorage.getItem('user');
   const currentPath = window.location.pathname;
   
-  // If we're on login page but have a token, redirect to dashboard
-  if (currentPath === '/login' && token && user) {
+  // Helper to check if we're logging out
+  const isLoggingOut = () => {
+    return sessionStorage.getItem('loggingOut') === 'true' || 
+           document.body.getAttribute('data-logging-out') === 'true';
+  };
+  
+  // If we're on login page but have a token and not logging out, redirect to dashboard
+  if (currentPath === '/login' && token && user && !isLoggingOut()) {
     console.log('✅ Token found, redirecting to dashboard');
     window.location.href = '/dashboard';
     return;
   }
+  
+  // Clear logout flags after page loads
+  window.addEventListener('load', () => {
+    if (sessionStorage.getItem('loggingOut')) {
+      sessionStorage.removeItem('loggingOut');
+    }
+    document.body.removeAttribute('data-logging-out');
+  });
   
   // Intercept navigation to login
   const originalPushState = history.pushState;
   const originalReplaceState = history.replaceState;
   
   const checkAndBlock = (url) => {
+    if (isLoggingOut()) return false;
     if (url && url.includes('/login') && token && user) {
       console.log('🚫 Blocked navigation to login');
       return true;
@@ -40,10 +55,20 @@
   // Also intercept clicks on links
   document.addEventListener('click', function(e) {
     const link = e.target.closest('a');
-    if (link && link.getAttribute('href') === '/login' && token && user) {
+    if (link && link.getAttribute('href') === '/login' && token && user && !isLoggingOut()) {
       e.preventDefault();
       console.log('🚫 Blocked login link click');
       window.location.href = '/dashboard';
     }
   });
+  
+  // Add a global logout helper
+  window.prepareLogout = function() {
+    sessionStorage.setItem('loggingOut', 'true');
+    document.body.setAttribute('data-logging-out', 'true');
+    // Small delay to ensure flags are set before redirect
+    setTimeout(() => {
+      window.location.href = '/login';
+    }, 50);
+  };
 })();
