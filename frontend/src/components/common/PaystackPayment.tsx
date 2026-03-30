@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import toast from 'react-hot-toast';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+// Hardcoded Paystack test public key for testing
+const PAYSTACK_KEY = 'pk_test_7fab5c29d364e15f1bdb4c9d3e4b0027758440d9';
 
 interface PaystackPaymentProps {
   amount: number;
@@ -10,6 +13,7 @@ interface PaystackPaymentProps {
   studentName: string;
   roomNumber: string;
   roomId: string;
+  duration?: string;
   onSuccess?: () => void;
   onClose?: () => void;
 }
@@ -26,12 +30,23 @@ const PaystackPayment: React.FC<PaystackPaymentProps> = ({
   studentName,
   roomNumber,
   roomId,
+  duration = 'session',
   onSuccess,
   onClose
 }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    console.log('=== Paystack Payment Debug Info ===');
+    console.log('Amount (naira):', amount);
+    console.log('Amount (kobo):', amount * 100);
+    console.log('Email:', email);
+    console.log('Room:', roomNumber);
+    console.log('Student:', studentName);
+    console.log('===================================');
+  }, [amount, email, roomNumber, studentName]);
 
   const initializePayment = async () => {
     setLoading(true);
@@ -41,74 +56,119 @@ const PaystackPayment: React.FC<PaystackPaymentProps> = ({
       const token = localStorage.getItem('token');
       const headers = { Authorization: `Bearer ${token}` };
       
+      console.log('Calling backend to initialize payment...');
+      console.log('Payload:', { amount, roomId, roomNumber, studentName, duration });
+      
       const response = await axios.post(
         `${API_URL}/payments/initialize`,
         {
-          amount,
+          amount: amount,
           roomId,
           roomNumber,
-          studentName
+          studentName,
+          duration
         },
         { headers }
       );
 
+      console.log('Backend response:', response.data);
+
       if (response.data.success && response.data.data.reference) {
-        // Check if Paystack script is loaded
-        if (!window.PaystackPop) {
-          setError('Paystack is not loaded. Please refresh the page and try again.');
+        const publicKey = PAYSTACK_KEY;
+        const reference = response.data.data.reference;
+        const amountInKobo = Math.round(amount * 100);
+        
+        console.log('=== Paystack Setup ===');
+        console.log('Public Key:', publicKey);
+        console.log('Reference:', reference);
+        console.log('Amount in kobo:', amountInKobo);
+        console.log('Email:', email);
+        console.log('=====================');
+        
+        if (!publicKey) {
+          const errorMsg = 'Paystack public key is missing.';
+          setError(errorMsg);
+          toast.error(errorMsg);
+          setLoading(false);
+          return;
+        }
+        
+        if (typeof window.PaystackPop === 'undefined') {
+          const errorMsg = 'Paystack script not loaded. Please refresh the page.';
+          setError(errorMsg);
+          toast.error(errorMsg);
           setLoading(false);
           return;
         }
 
-        // Define callback functions
-        const callback = (responseData: any) => {
-          console.log('Payment callback:', responseData);
+        const callback = async (responseData: any) => {
+          console.log('Paystack callback received:', responseData);
           if (responseData.status === 'success') {
-            verifyPayment(responseData.reference);
+            await verifyPayment(responseData.reference);
+          } else {
+            console.log('Payment was not successful:', responseData);
+            setError('Payment was not completed successfully');
+            toast.error('Payment was not completed successfully');
+            setLoading(false);
           }
         };
 
         const closeCallback = () => {
-          console.log('Payment modal closed');
+          console.log('Payment modal closed by user');
           setLoading(false);
           if (onClose) onClose();
         };
 
-        // Open Paystack popup with correct configuration
-        const handler = window.PaystackPop.setup({
-          key: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY,
-          email: email,
-          amount: amount * 100, // Paystack expects amount in kobo
-          currency: 'NGN',
-          ref: response.data.data.reference,
-          metadata: {
-            student_name: studentName,
-            room_number: roomNumber,
-            custom_fields: [
-              {
-                display_name: "Student Name",
-                variable_name: "student_name",
-                value: studentName
-              },
-              {
-                display_name: "Room Number",
-                variable_name: "room_number",
-                value: roomNumber
-              }
-            ]
-          },
-          callback: callback,
-          onClose: closeCallback
-        });
-        
-        handler.openIframe();
+        try {
+          const handler = window.PaystackPop.setup({
+            key: publicKey,
+            email: email,
+            amount: amountInKobo,
+            currency: 'NGN',
+            ref: reference,
+            metadata: {
+              student_name: studentName,
+              room_number: roomNumber,
+              duration: duration,
+              custom_fields: [
+                {
+                  display_name: "Student Name",
+                  variable_name: "student_name",
+                  value: studentName
+                },
+                {
+                  display_name: "Room Number",
+                  variable_name: "room_number",
+                  value: roomNumber
+                },
+                {
+                  display_name: "Duration",
+                  variable_name: "duration",
+                  value: duration
+                }
+              ]
+            },
+            callback: callback,
+            onClose: closeCallback
+          });
+          
+          handler.openIframe();
+        } catch (paystackError: any) {
+          console.error('Paystack setup error:', paystackError);
+          setError(`Paystack error: ${paystackError.message || 'Failed to open payment window'}`);
+          toast.error('Failed to open payment window');
+          setLoading(false);
+        }
       } else {
-        setError('Failed to initialize payment. Please try again.');
+        setError(response.data.message || 'Failed to initialize payment. Please try again.');
+        toast.error(response.data.message || 'Failed to initialize payment. Please try again.');
         setLoading(false);
       }
     } catch (err: any) {
       console.error('Payment initialization error:', err);
-      setError(err.response?.data?.message || 'Failed to initialize payment. Please try again.');
+      const errorMsg = err.response?.data?.message || err.message || 'Failed to initialize payment. Please try again.';
+      setError(errorMsg);
+      toast.error(errorMsg);
       setLoading(false);
     }
   };
@@ -118,21 +178,27 @@ const PaystackPayment: React.FC<PaystackPaymentProps> = ({
       const token = localStorage.getItem('token');
       const headers = { Authorization: `Bearer ${token}` };
       
+      console.log('Verifying payment with reference:', reference);
+      
       const response = await axios.get(
         `${API_URL}/payments/verify/${reference}`,
         { headers }
       );
 
+      console.log('Payment verification response:', response.data);
+
       if (response.data.success) {
+        console.log('✅ Payment verified successfully!');
         if (onSuccess) onSuccess();
-        alert('Payment successful! Your room has been allocated.');
+        toast.success('Payment successful! Your room has been allocated.');
         navigate('/dashboard/payments');
       } else {
-        alert('Payment verification failed. Please contact support.');
+        console.log('❌ Payment verification failed:', response.data.message);
+        toast.error(`Payment verification failed: ${response.data.message || 'Please contact support'}`);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Payment verification error:', err);
-      alert('Payment verification failed. Please contact support.');
+      toast.error(`Payment verification failed: ${err.response?.data?.message || err.message}`);
     } finally {
       setLoading(false);
     }
