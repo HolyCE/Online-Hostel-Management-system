@@ -29,23 +29,43 @@ import AdminSettings from './pages/admin/AdminSettings';
 
 import './index.css';
 
-// Simple Protected Route - just checks token
-const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+// Loading component
+const LoadingScreen = () => (
+  <div className="flex items-center justify-center h-screen bg-white">
+    <div className="text-center">
+      <div className="w-16 h-16 border-4 border-black border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+      <p className="text-gray-600">Loading your session...</p>
+    </div>
+  </div>
+);
+
+// Protected Route Component with role check
+const ProtectedRoute: React.FC<{
+  children: React.ReactNode;
+  allowedRoles?: ('student' | 'admin')[];
+}> = ({ children, allowedRoles }) => {
+  const { user, loading } = useAuth();
   const token = localStorage.getItem('token');
-  console.log('🔒 ProtectedRoute - Token exists?', !!token);
-  console.log('📍 ProtectedRoute - Path:', window.location.pathname);
-  
-  if (!token) {
-    console.log('❌ No token, redirecting to login');
+
+  if (loading) {
+    return <LoadingScreen />;
+  }
+
+  if (!token || !user) {
     return <Navigate to="/login" replace />;
   }
-  
-  console.log('✅ Token found, rendering protected content');
+
+  if (allowedRoles && !allowedRoles.includes(user.role)) {
+    if (user.role === 'admin') {
+      return <Navigate to="/dashboard/admin/overview" replace />;
+    }
+    return <Navigate to="/dashboard" replace />;
+  }
+
   return <>{children}</>;
 };
 
 function App() {
-  console.log('🏠 App rendering');
   return (
     <ThemeContextProvider>
       <AuthProvider>
@@ -57,25 +77,15 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             
-            {/* Student Dashboard Routes */}
-            <Route path="/dashboard" element={
-              <ProtectedRoute>
-                <DashboardLayout />
-              </ProtectedRoute>
-            }>
-              <Route index element={<StudentOverview />} />
-              <Route path="rooms" element={<StudentRooms />} />
-              <Route path="payments" element={<StudentPayments />} />
-              <Route path="tickets" element={<StudentTickets />} />
-              <Route path="profile" element={<StudentProfile />} />
-            </Route>
-            
-            {/* Admin Dashboard Routes */}
-            <Route path="/dashboard/admin" element={
-              <ProtectedRoute>
-                <DashboardLayout />
-              </ProtectedRoute>
-            }>
+            {/* Admin Dashboard Routes - MUST come before student routes */}
+            <Route
+              path="/dashboard/admin"
+              element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <DashboardLayout />
+                </ProtectedRoute>
+              }
+            >
               <Route index element={<Navigate to="overview" replace />} />
               <Route path="overview" element={<AdminOverview />} />
               <Route path="rooms" element={<AdminRooms />} />
@@ -84,6 +94,22 @@ function App() {
               <Route path="tickets" element={<AdminTickets />} />
               <Route path="reports" element={<AdminReports />} />
               <Route path="settings" element={<AdminSettings />} />
+            </Route>
+            
+            {/* Student Dashboard Routes */}
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute allowedRoles={['student']}>
+                  <DashboardLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<StudentOverview />} />
+              <Route path="rooms" element={<StudentRooms />} />
+              <Route path="payments" element={<StudentPayments />} />
+              <Route path="tickets" element={<StudentTickets />} />
+              <Route path="profile" element={<StudentProfile />} />
             </Route>
             
             {/* Fallback */}
