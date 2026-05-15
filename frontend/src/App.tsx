@@ -34,35 +34,23 @@ const LoadingScreen = () => (
   <div className="flex items-center justify-center h-screen bg-white">
     <div className="text-center">
       <div className="w-16 h-16 border-4 border-black border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-      <p className="text-gray-600">Loading your session...</p>
+      <p className="text-gray-600">Loading...</p>
     </div>
   </div>
 );
 
-// Protected Route Component with role check
-const ProtectedRoute: React.FC<{
-  children: React.ReactNode;
-  allowedRoles?: ('student' | 'admin')[];
-}> = ({ children, allowedRoles }) => {
+// Role-based redirect component
+const RoleBasedRedirect = () => {
   const { user, loading } = useAuth();
-  const token = localStorage.getItem('token');
-
+  
   if (loading) {
     return <LoadingScreen />;
   }
-
-  if (!token || !user) {
-    return <Navigate to="/login" replace />;
+  
+  if (user?.role === 'admin') {
+    return <Navigate to="/dashboard/admin/overview" replace />;
   }
-
-  if (allowedRoles && !allowedRoles.includes(user.role)) {
-    if (user.role === 'admin') {
-      return <Navigate to="/dashboard/admin/overview" replace />;
-    }
-    return <Navigate to="/dashboard" replace />;
-  }
-
-  return <>{children}</>;
+  return <Navigate to="/dashboard" replace />;
 };
 
 function App() {
@@ -77,15 +65,11 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             
-            {/* Admin Dashboard Routes - MUST come before student routes */}
-            <Route
-              path="/dashboard/admin"
-              element={
-                <ProtectedRoute allowedRoles={['admin']}>
-                  <DashboardLayout />
-                </ProtectedRoute>
-              }
-            >
+            {/* Dashboard Redirect */}
+            <Route path="/dashboard" element={<RoleBasedRedirect />} />
+            
+            {/* Admin Dashboard Routes */}
+            <Route path="/dashboard/admin" element={<DashboardLayout />}>
               <Route index element={<Navigate to="overview" replace />} />
               <Route path="overview" element={<AdminOverview />} />
               <Route path="rooms" element={<AdminRooms />} />
@@ -97,14 +81,7 @@ function App() {
             </Route>
             
             {/* Student Dashboard Routes */}
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute allowedRoles={['student']}>
-                  <DashboardLayout />
-                </ProtectedRoute>
-              }
-            >
+            <Route path="/dashboard" element={<DashboardLayout />}>
               <Route index element={<StudentOverview />} />
               <Route path="rooms" element={<StudentRooms />} />
               <Route path="payments" element={<StudentPayments />} />
